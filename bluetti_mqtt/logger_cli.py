@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import base64
+from io import TextIOWrapper
 import itertools
 import json
 import re
@@ -8,7 +9,7 @@ import textwrap
 import time
 from bleak import BleakScanner
 from .bluetooth_client import BluetoothClient
-from .commands import QueryRangeCommand
+from .commands import DeviceCommand, QueryRangeCommand
 from .exc import ParseError, BadConnectionError
 
 
@@ -24,8 +25,18 @@ async def scan():
             print(f'Found {d.name}: address {d.address}')
 
 
-async def log(address):
-    print(f'Connecting to {address}...')
+def log_packet(output: TextIOWrapper, data: bytes, command: DeviceCommand):
+    log_entry = {
+        'type': 'client',
+        'time': time.strftime('%Y-%m-%d %H:%M:%S %z', time.localtime()),
+        'data': base64.b64encode(data).decode('ascii'),
+        'command': base64.b64encode(bytes(command)).decode('ascii'),
+    }
+    output.write(json.dumps(log_entry) + '\n')
+
+
+async def log(address: str, path: str):
+    print(f'Connecting to {address}')
     device = BluetoothClient(address)
     asyncio.get_running_loop().create_task(device.run())
     commands = [
@@ -34,24 +45,22 @@ async def log(address):
         QueryRangeCommand(0x00, 0x88, 0x4a),
         QueryRangeCommand(0x0B, 0xB9, 0x3D)
     ]
-    for command in itertools.cycle(commands):
-        if not device.is_connected:
-            await asyncio.sleep(1)
-            continue
 
-        result_future = await device.perform(command)
-        try:
-            result = await result_future
-            time_str = time.strftime('%Y-%m-%d %H:%M:%S %z', time.localtime())
-            log_entry = {
-                'type': 'client',
-                'time': time_str,
-                'data': base64.b64encode(result).decode('ascii'),
-                'command': base64.b64encode(bytes(command)).decode('ascii'),
-            }
-            print(json.dumps(log_entry))
-        except (ParseError, BadConnectionError):
-            continue
+    with open(path, 'a') as log_file:
+        for command in itertools.cycle(commands):
+            if not device.is_connected:
+                print('Waiting for connection...')
+                await asyncio.sleep(1)
+                continue
+
+            result_future = await device.perform(command)
+            try:
+                result = await result_future
+                log_packet(log_file, result, command)
+            except ParseError:
+                print('Got a parse exception...')
+            except BadConnectionError as err:
+                print(f'Needed to disconnect due to error: {err}')
 
 
 def main():
@@ -63,7 +72,7 @@ def main():
             %(prog)s --scan
 
             Once you have found your device you can run the logger:
-            %(prog)s --log 00:11:22:33:44:55
+            %(prog)s --log log-file.log 00:11:22:33:44:55
             """))
     parser.add_argument(
         '--scan',
@@ -71,12 +80,17 @@ def main():
         help='Scans for devices and prints out addresses')
     parser.add_argument(
         '--log',
+        metavar='PATH',
+        help='Connect and log data for the device to the given file')
+    parser.add_argument(
+        'address',
         metavar='ADDRESS',
-        help='Connect and log data for the given device to STDOUT')
+        nargs='?',
+        help='The device MAC to connect to for logging')
     args = parser.parse_args()
     if args.scan:
         asyncio.run(scan())
     elif args.log:
-        asyncio.run(log(args.log))
+        asyncio.run(log(args.address, args.log))
     else:
         parser.print_help()
