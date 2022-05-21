@@ -1,0 +1,3 @@
+bleak==0.14.3
+crcmod==1.7
+dbus-next==0.2.3
