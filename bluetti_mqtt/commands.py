@@ -36,8 +36,8 @@ class QueryRangeCommand(DeviceCommand):
 
     def __repr__(self):
         return (
-            f'QueryRangeCommand({self.page=:#04x}, {self.offset=:#04x},'
-            f' {self.length=:#04x})'
+            f'QueryRangeCommand(page={self.page:#04x},'
+            f' offset={self.offset:#04x}, length={self.length:#04x})'
         )
 
 
@@ -59,8 +59,8 @@ class UpdateFieldCommand(DeviceCommand):
 
     def __repr__(self):
         return (
-            f'UpdateFieldCommand({self.page=:#04x}, {self.offset=:#04x},'
-            f' {self.value=:#04x})'
+            f'UpdateFieldCommand(page={self.page:#04x},'
+            f' offset={self.offset:#04x}, value={self.value:#04x})'
         )
 
 
@@ -87,6 +87,6 @@ class UpdateRangeCommand(DeviceCommand):
 
     def __repr__(self):
         return (
-            f'UpdateRangeCommand({self.page=:#04x}, {self.offset=:#04x},'
-            f' {self.data=})'
+            f'UpdateRangeCommand(page={self.page:#04x},'
+            f' offset={self.offset:#04x}, data={self.data})'
         )
