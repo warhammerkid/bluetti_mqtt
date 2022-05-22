@@ -71,7 +71,6 @@ class BluetoothClient:
                         self.notify_future,
                         timeout=self.RESPONSE_TIMEOUT)
                     if cmd_future:
-                        # TODO: Parse result
                         cmd_future.set_result(res)
 
                     # Success!

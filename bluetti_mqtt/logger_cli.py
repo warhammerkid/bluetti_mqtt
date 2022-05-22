@@ -9,8 +9,10 @@ import textwrap
 import time
 from bleak import BleakScanner
 from .bluetooth_client import BluetoothClient
-from .commands import DeviceCommand, QueryRangeCommand
+from .commands import DeviceCommand
 from .exc import ParseError, BadConnectionError
+from .parser import (LowerStatusPageParser, MidStatusPageParser,
+                     ControlPageParser)
 
 
 async def scan():
@@ -39,20 +41,16 @@ async def log(address: str, path: str):
     print(f'Connecting to {address}')
     device = BluetoothClient(address)
     asyncio.get_running_loop().create_task(device.run())
-    commands = [
-        QueryRangeCommand(0x00, 0x00, 0x46),
-        QueryRangeCommand(0x00, 0x46, 0x42),
-        QueryRangeCommand(0x00, 0x88, 0x4a),
-        QueryRangeCommand(0x0B, 0xB9, 0x3D)
-    ]
+    parsers = [LowerStatusPageParser, MidStatusPageParser, ControlPageParser]
 
     with open(path, 'a') as log_file:
-        for command in itertools.cycle(commands):
+        for parser in itertools.cycle(parsers):
             if not device.is_connected:
                 print('Waiting for connection...')
                 await asyncio.sleep(1)
                 continue
 
+            command = parser.build_query_command()
             result_future = await device.perform(command)
             try:
                 result = await result_future
