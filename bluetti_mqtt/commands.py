@@ -1,5 +1,5 @@
 import struct
-from .utils import modbus_crc
+from bluetti_mqtt.utils import modbus_crc
 
 
 class DeviceCommand:

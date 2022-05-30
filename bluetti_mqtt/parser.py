@@ -1,7 +1,7 @@
 from decimal import Decimal
 from enum import Enum, unique
 import struct
-from .commands import QueryRangeCommand
+from bluetti_mqtt.commands import QueryRangeCommand
 
 
 @unique
@@ -81,12 +81,24 @@ class LowerStatusPageParser(DataParser):
     def build_query_command():
         return QueryRangeCommand(0x00, 0x00, 0x46)
 
+    def __repr__(self):
+        return (
+            f'LowerStatusPageParser(dc_input_power={self.dc_input_power}W,'
+            f' ac_input_power={self.ac_input_power}W,'
+            f' ac_output_power={self.ac_output_power}W,'
+            f' dc_output_power={self.dc_output_power}W,'
+            f' total_battery_percent={self.total_battery_percent}%,'
+            f' ac_output_on={self.ac_output_on},'
+            f' dc_output_on={self.dc_output_on})'
+        )
+
 
 class MidStatusPageParser(DataParser):
-    inverter_mode: OutputMode
+    ac_output_mode: OutputMode
     ac_input_voltage: Decimal
     ac_input_frequency: Decimal
-    current_pack: int
+    pack_num_max: int
+    pack_num: int
     pack_battery_percent: int
 
     def __init__(self, data: bytes):
@@ -96,6 +108,7 @@ class MidStatusPageParser(DataParser):
         self.ac_output_mode = OutputMode(self._parse_uint_field(0x46))
         self.ac_input_voltage = self._parse_decimal_field(0x4D, 1)
         self.ac_input_frequency = self._parse_decimal_field(0x50, 2)
+        self.pack_num_max = self._parse_uint_field(0x5B)
         self.pack_battery_percent = self._parse_uint_field(0x5E)
         self.pack_num = self._parse_uint_field(0x60)
         return self
@@ -104,10 +117,20 @@ class MidStatusPageParser(DataParser):
     def build_query_command():
         return QueryRangeCommand(0x00, 0x46, 0x42)
 
+    def __repr__(self):
+        return (
+            f'MidStatusPageParser(ac_output_mode={self.ac_output_mode.name},'
+            f' ac_input_voltage={self.ac_input_voltage}V,'
+            f' ac_input_frequency={self.ac_input_frequency}Hz,'
+            f' pack_num_max={self.pack_num_max},'
+            f' pack_num={self.pack_num},'
+            f' pack_battery_percent={self.pack_battery_percent}%)'
+        )
+
 
 class ControlPageParser(DataParser):
     ups_mode: UpsMode
-    current_pack: int
+    pack_num: int
     ac_output_on: bool
     dc_output_on: bool
     grid_charge_on: bool
@@ -121,7 +144,7 @@ class ControlPageParser(DataParser):
 
     def parse(self):
         self.ups_mode = UpsMode(self._parse_uint_field(0xB9))
-        self.current_pack = self._parse_uint_field(0xBE)
+        self.pack_num = self._parse_uint_field(0xBE)
         self.ac_output_on = self._parse_bool_field(0xBF)
         self.dc_output_on = self._parse_bool_field(0xC0)
         self.grid_charge_on = self._parse_bool_field(0xC3)
@@ -134,3 +157,16 @@ class ControlPageParser(DataParser):
     @staticmethod
     def build_query_command():
         return QueryRangeCommand(0x0B, 0xB9, 0x3D)
+
+    def __repr__(self):
+        return (
+            f'ControlPageParser(ups_mode={self.ups_mode.name},'
+            f' pack_num={self.pack_num},'
+            f' ac_output_on={self.ac_output_on},'
+            f' dc_output_on={self.dc_output_on},'
+            f' grid_charge_on={self.grid_charge_on},'
+            f' time_control_on={self.time_control_on},'
+            f' battery_range_start={self.battery_range_start}%,'
+            f' battery_range_end={self.battery_range_end}%,'
+            f' auto_sleep_mode={self.auto_sleep_mode.name})'
+        )

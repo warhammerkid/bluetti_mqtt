@@ -8,11 +8,9 @@ import re
 import textwrap
 import time
 from bleak import BleakScanner
-from .bluetooth_client import BluetoothClient
-from .commands import DeviceCommand
-from .exc import ParseError, BadConnectionError
-from .parser import (LowerStatusPageParser, MidStatusPageParser,
-                     ControlPageParser)
+from bluetti_mqtt.bluetooth.client import BluetoothClient
+from bluetti_mqtt.bluetooth.exc import ParseError, BadConnectionError
+from bluetti_mqtt.commands import QueryRangeCommand
 
 
 async def scan():
@@ -27,7 +25,7 @@ async def scan():
             print(f'Found {d.name}: address {d.address}')
 
 
-def log_packet(output: TextIOWrapper, data: bytes, command: DeviceCommand):
+def log_packet(output: TextIOWrapper, data: bytes, command: QueryRangeCommand):
     log_entry = {
         'type': 'client',
         'time': time.strftime('%Y-%m-%d %H:%M:%S %z', time.localtime()),
@@ -41,16 +39,21 @@ async def log(address: str, path: str):
     print(f'Connecting to {address}')
     device = BluetoothClient(address)
     asyncio.get_running_loop().create_task(device.run())
-    parsers = [LowerStatusPageParser, MidStatusPageParser, ControlPageParser]
+    commands = [
+        QueryRangeCommand(0x00, 0x00, 0x46),
+        QueryRangeCommand(0x00, 0x46, 0x42),
+        QueryRangeCommand(0x00, 0x88, 0x4a),
+        QueryRangeCommand(0x0B, 0xB9, 0x3D)
+    ]
 
     with open(path, 'a') as log_file:
-        for parser in itertools.cycle(parsers):
+        command: QueryRangeCommand
+        for command in itertools.cycle(commands):
             if not device.is_connected:
                 print('Waiting for connection...')
                 await asyncio.sleep(1)
                 continue
 
-            command = parser.build_query_command()
             result_future = await device.perform(command)
             try:
                 result = await result_future

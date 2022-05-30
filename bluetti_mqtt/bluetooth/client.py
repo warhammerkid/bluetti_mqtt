@@ -1,8 +1,8 @@
 import asyncio
 from bleak import BleakClient, BleakError
-from .utils import modbus_crc
-from .commands import DeviceCommand
-from .exc import BadConnectionError, ParseError
+from bluetti_mqtt.utils import modbus_crc
+from bluetti_mqtt.commands import DeviceCommand
+from bluetti_mqtt.bluetooth.exc import BadConnectionError, ParseError
 
 
 class BluetoothClient:
