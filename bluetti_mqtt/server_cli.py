@@ -5,6 +5,7 @@ from typing import Set
 import warnings
 import sys
 from bluetti_mqtt.bluetooth import BluetoothClientHandler, scan_devices
+from bluetti_mqtt.bus import EventBus
 from bluetti_mqtt.mqtt_client import MQTTClient
 
 
@@ -40,9 +41,7 @@ class CommandLineHandler:
 
     async def start(self, broker: str, addresses: Set[str]):
         loop = asyncio.get_running_loop()
-
-        # Build a simple "event bus" with a Queue
-        bus = asyncio.Queue()
+        bus = EventBus()
 
         # Verify that we can see all the given addresses
         bluetooth_handler = BluetoothClientHandler(addresses, bus)
@@ -53,9 +52,12 @@ class CommandLineHandler:
         # Start bluetooth handler (manages connections)
         self.bluetooth_task = loop.create_task(bluetooth_handler.run())
 
+        # Start MQTT client
+        mqtt_client = MQTTClient(broker, devices, bus)
+        self.mqtt_task = loop.create_task(mqtt_client.run())
+
         # Loop forever!
-        mqtt_client = MQTTClient(broker, bus)
-        await mqtt_client.run()
+        await bus.run()
 
 
 def main(argv=None):
