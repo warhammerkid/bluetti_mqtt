@@ -2,9 +2,9 @@
 bluetti_mqtt
 ============
 
-This tool provides an MQTT interface to Bluetti power stations. Currently it
-does not support controlling any devices, but will eventualy support that and
-Home Assistant MQTT auto-config.
+This tool provides an MQTT interface to Bluetti power stations. State will be
+published to the `bluetti/state/[DEVICE NAME]/[PROPERTY]` topic, and commands
+can be sent to the `bluetti/command/[DEVICE NAME]/[PROPERTY]` topic.
 
 Installation
 ------------
