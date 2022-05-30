@@ -106,11 +106,24 @@ class MidStatusPageParser(DataParser):
 
     def parse(self):
         self.ac_output_mode = OutputMode(self._parse_uint_field(0x46))
+        # 0x47 looks like the inverter voltage - decimal:1
+        # 0x48 looks like the inverter current - decimal:1
+        # 0x49 looks like the inverter power output - uint
+        # 0x4A looks like the inverter frequency - decimal:2
+        # 0x4B looks like the ac output current - decimal:1
+        # 0x4C looks like the ac output power - uint
         self.ac_input_voltage = self._parse_decimal_field(0x4D, 1)
+        # 0x4E looks like the ac input current - decimal:1
+        # 0x4F looks like the AC->DC power - uint
         self.ac_input_frequency = self._parse_decimal_field(0x50, 2)
+        # 0x56 looks like the dc input voltage for one of the inputs - decimal:1
+        # 0x57 looks like the dc input power for one of the inputs - uint
+        # 0x58 looks like the dc input current for one of the inputs - decimal:1
         self.pack_num_max = self._parse_uint_field(0x5B)
+        # 0x5C looks like the current battery pack voltage - decimal:1
         self.pack_battery_percent = self._parse_uint_field(0x5E)
         self.pack_num = self._parse_uint_field(0x60)
+        # 0x69-0x79 is the current battery pack cell voltages - decimal:2
         return self
 
     @staticmethod
@@ -151,6 +164,8 @@ class ControlPageParser(DataParser):
         self.time_control_on = self._parse_bool_field(0xC5)
         self.battery_range_start = self._parse_uint_field(0xC7)
         self.battery_range_end = self._parse_uint_field(0xC8)
+        # 0xD7-0xD9 is the current device time & date without a timezone
+        # 0xDF-0xF0 is the time control programming
         self.auto_sleep_mode = AutoSleepMode(self._parse_uint_field(0xF5))
         return self
 
