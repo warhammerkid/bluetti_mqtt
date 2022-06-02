@@ -2,6 +2,7 @@ import asyncio
 import itertools
 import logging
 import re
+import time
 from typing import Dict, List, Set, Type
 from bleak import BleakScanner
 from bleak.backends.device import BLEDevice
@@ -24,8 +25,9 @@ class BluetoothClientHandler:
     devices: List[BluettiDevice]
     clients: Dict[BluettiDevice, BluetoothClient]
 
-    def __init__(self, addresses: Set[str], bus: EventBus):
+    def __init__(self, addresses: Set[str], interval: int, bus: EventBus):
         self.addresses = addresses
+        self.interval = interval
         self.bus = bus
         self.devices = []
         self.clients = {}
@@ -64,24 +66,33 @@ class BluetoothClientHandler:
             await client.perform_nowait(msg.command)
 
     async def _poll(self, device: BluettiDevice, client: BluetoothClient):
-        parsers = [LowerStatusPageParser, MidStatusPageParser, ControlPageParser]
-        parser: Type[DataParser]
-        for parser in itertools.cycle(parsers):
+        while True:
             if not client.is_connected:
                 logging.debug(f'Waiting for connection to {device.address} to start polling...')
                 await asyncio.sleep(1)
                 continue
 
-            command = parser.build_query_command()
-            result_future = await client.perform(command)
-            try:
-                result = await result_future
-                parsed = parser(result[3:-2]).parse()
-                await self.bus.put(ParserMessage(device, parsed))
-            except ParseError:
-                logging.debug('Got a parse exception...')
-            except BadConnectionError as err:
-                logging.debug(f'Needed to disconnect due to error: {err}')
+            start_time = time.monotonic()
+            await self._poll_with_parser(device, client, LowerStatusPageParser)
+            await self._poll_with_parser(device, client, MidStatusPageParser)
+            await self._poll_with_parser(device, client, ControlPageParser)
+            elapsed = time.monotonic() - start_time
+
+            # Limit polling rate if interval provided
+            if self.interval > 0 and self.interval > elapsed:
+                await asyncio.sleep(self.interval - elapsed)
+
+    async def _poll_with_parser(self, device: BluettiDevice, client: BluetoothClient, parser: Type[DataParser]):
+        command = parser.build_query_command()
+        result_future = await client.perform(command)
+        try:
+            result = await result_future
+            parsed = parser(result[3:-2]).parse()
+            await self.bus.put(ParserMessage(device, parsed))
+        except ParseError:
+            logging.debug('Got a parse exception...')
+        except BadConnectionError as err:
+            logging.debug(f'Needed to disconnect due to error: {err}')
 
 
 async def scan_devices():

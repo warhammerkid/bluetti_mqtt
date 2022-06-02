@@ -26,6 +26,11 @@ class CommandLineHandler:
             metavar='HOST',
             help='The MQTT broker host to connect to')
         parser.add_argument(
+            '--interval',
+            default=0,
+            type=int,
+            help='The polling interval - default is to poll as fast as possible')
+        parser.add_argument(
             'addresses',
             metavar='ADDRESS',
             nargs='*',
@@ -35,16 +40,16 @@ class CommandLineHandler:
             asyncio.run(scan_devices())
         elif args.broker and len(args.addresses) > 0:
             addresses = set(args.addresses)
-            asyncio.run(self.start(args.broker, addresses))
+            asyncio.run(self.start(args.broker, args.interval, addresses))
         else:
             parser.print_help()
 
-    async def start(self, broker: str, addresses: Set[str]):
+    async def start(self, broker: str, interval: int, addresses: Set[str]):
         loop = asyncio.get_running_loop()
         bus = EventBus()
 
         # Verify that we can see all the given addresses
-        bluetooth_handler = BluetoothClientHandler(addresses, bus)
+        bluetooth_handler = BluetoothClientHandler(addresses, interval, bus)
         devices = await bluetooth_handler.check()
         if len(devices) == 0:
             sys.exit('Could not find the given devices to connect to')
