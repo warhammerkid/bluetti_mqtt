@@ -2,7 +2,7 @@ import asyncio
 from bleak import BleakClient, BleakError
 from bluetti_mqtt.utils import modbus_crc
 from bluetti_mqtt.commands import DeviceCommand
-from bluetti_mqtt.bluetooth.exc import BadConnectionError, ParseError
+from bluetti_mqtt.bluetooth.exc import BadConnectionError, InvalidRequestError, ParseError
 
 
 class BluetoothClient:
@@ -81,7 +81,7 @@ class BluetoothClient:
                     await asyncio.sleep(self.RESPONSE_TIMEOUT)
                 except asyncio.TimeoutError:
                     retries += 1
-                except BleakError as err:
+                except (InvalidRequestError, BleakError) as err:
                     if cmd_future:
                         cmd_future.set_exception(err)
 
@@ -117,12 +117,15 @@ class BluetoothClient:
         # Save data
         self.notify_data.extend(data)
 
-        # Check if we're done reading the data we expected
         if len(self.notify_data) == self.current_command.response_size():
-            # Validate the CRC
+            # We got the data we were expecting - validate the CRC
             crc = modbus_crc(self.notify_data[0:-2])
             crc_bytes = crc.to_bytes(2, byteorder='little')
             if self.notify_data[-2:] == crc_bytes:
                 self.notify_future.set_result(self.notify_data)
             else:
                 self.notify_future.set_exception(ParseError('Failed checksum'))
+        elif len(self.notify_data) == 5 and self.notify_data[1] == 0x83:
+            # We got an invalid request error response
+            msg = f'Error {self.notify_data[2]}'
+            self.notify_future.set_exception(InvalidRequestError(msg))
