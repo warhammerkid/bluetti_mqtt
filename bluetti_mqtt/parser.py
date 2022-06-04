@@ -1,6 +1,7 @@
 from decimal import Decimal
 from enum import Enum, unique
 import struct
+from typing import List, Tuple
 from bluetti_mqtt.commands import QueryRangeCommand
 
 
@@ -56,6 +57,9 @@ class DataParser:
 
 class LowerStatusPageParser(DataParser):
     device_type: str
+    serial_number: int
+    arm_version: Decimal
+    dsp_version: Decimal
     dc_input_power: int
     ac_input_power: int
     ac_output_power: int
@@ -68,6 +72,10 @@ class LowerStatusPageParser(DataParser):
         super().__init__(0x00, data)
 
     def parse(self):
+        self.device_type = self._parse_string_field(0x0A, 6)
+        self.serial_number = self._parse_sn_field(0x11)
+        self.arm_version = self._parse_version_field(0x17)
+        self.dsp_version = self._parse_version_field(0x19)
         self.dc_input_power = self._parse_uint_field(0x24)
         self.ac_input_power = self._parse_uint_field(0x25)
         self.ac_output_power = self._parse_uint_field(0x26)
@@ -83,7 +91,11 @@ class LowerStatusPageParser(DataParser):
 
     def __repr__(self):
         return (
-            f'LowerStatusPageParser(dc_input_power={self.dc_input_power}W,'
+            f'LowerStatusPageParser(device_type={self.device_type},'
+            f' serial_number={self.serial_number},'
+            f' arm_version={self.arm_version},'
+            f' dsp_version={self.dsp_version},'
+            f' dc_input_power={self.dc_input_power}W,'
             f' ac_input_power={self.ac_input_power}W,'
             f' ac_output_power={self.ac_output_power}W,'
             f' dc_output_power={self.dc_output_power}W,'
@@ -92,38 +104,65 @@ class LowerStatusPageParser(DataParser):
             f' dc_output_on={self.dc_output_on})'
         )
 
+    """Parses a fixed-width null-terminated string"""
+    def _parse_string_field(self, offset: int, size: int):
+        data = self._read_data(offset, size)
+        return data.rstrip(b'\0').decode('ascii')
+
+    def _parse_sn_field(self, offset: int) -> int:
+        data = self._read_data(offset, 4)
+        values = struct.unpack('!4H', data)
+        return values[0] + (values[1] << 16) + (values[2] << 32) + (values[3] << 48)
+
+    def _parse_version_field(self, offset: int):
+        data = self._read_data(offset, 2)
+        values = struct.unpack('!2H', data)
+        return Decimal(values[0] + (values[1] << 16)) / 100
+
 
 class MidStatusPageParser(DataParser):
     ac_output_mode: OutputMode
+    internal_ac_voltage: Decimal
+    internal_current_one: Decimal
+    internal_power_one: int
+    internal_ac_frequency: Decimal
+    internal_current_two: Decimal
+    internal_power_two: int
     ac_input_voltage: Decimal
+    internal_current_three: Decimal
+    internal_power_three: int
     ac_input_frequency: Decimal
+    dc_input_voltage: Decimal
+    dc_input_power: int
+    dc_input_current: Decimal
     pack_num_max: int
     pack_num: int
     pack_battery_percent: int
+    pack_voltages: List[Decimal]
 
     def __init__(self, data: bytes):
         super().__init__(0x46, data)
 
     def parse(self):
         self.ac_output_mode = OutputMode(self._parse_uint_field(0x46))
-        # 0x47 looks like the inverter voltage - decimal:1
-        # 0x48 looks like the inverter current - decimal:1
-        # 0x49 looks like the inverter power output - uint
-        # 0x4A looks like the inverter frequency - decimal:2
-        # 0x4B looks like the ac output current - decimal:1
-        # 0x4C looks like the ac output power - uint
+        self.internal_ac_voltage = self._parse_decimal_field(0x47, 1)
+        self.internal_current_one = self._parse_decimal_field(0x48, 1)
+        self.internal_power_one = self._parse_uint_field(0x49)
+        self.internal_ac_frequency = self._parse_decimal_field(0x4A, 2)
+        self.internal_current_two = self._parse_decimal_field(0x4B, 1)
+        self.internal_power_two = self._parse_uint_field(0x4C)
         self.ac_input_voltage = self._parse_decimal_field(0x4D, 1)
-        # 0x4E looks like the ac input current - decimal:1
-        # 0x4F looks like the AC->DC power - uint
+        self.internal_current_three = self._parse_decimal_field(0x4E, 1)
+        self.internal_power_three = self._parse_uint_field(0x4F)
         self.ac_input_frequency = self._parse_decimal_field(0x50, 2)
-        # 0x56 looks like the dc input voltage for one of the inputs - decimal:1
-        # 0x57 looks like the dc input power for one of the inputs - uint
-        # 0x58 looks like the dc input current for one of the inputs - decimal:1
+        self.dc_input_voltage = self._parse_decimal_field(0x56, 1)
+        self.dc_input_power = self._parse_uint_field(0x57)
+        self.dc_input_current = self._parse_decimal_field(0x58, 1)
         self.pack_num_max = self._parse_uint_field(0x5B)
-        # 0x5C looks like the current battery pack voltage - decimal:1
+        # 0x5C looks like the current battery pack voltage - decimal:1 or decimal:2 depending on model
         self.pack_battery_percent = self._parse_uint_field(0x5E)
         self.pack_num = self._parse_uint_field(0x60)
-        # 0x69-0x79 is the current battery pack cell voltages - decimal:2
+        self.pack_voltages = self._parse_voltages_field(0x69, 16)
         return self
 
     @staticmethod
@@ -133,12 +172,29 @@ class MidStatusPageParser(DataParser):
     def __repr__(self):
         return (
             f'MidStatusPageParser(ac_output_mode={self.ac_output_mode.name},'
+            f' internal_ac_voltage={self.internal_ac_voltage}V,'
+            f' internal_current_one={self.internal_current_one}A,'
+            f' internal_power_one={self.internal_power_one}W,'
+            f' internal_ac_frequency={self.internal_ac_frequency}Hz,'
+            f' internal_current_two={self.internal_current_two}A,'
+            f' internal_power_two={self.internal_power_two}W,'
             f' ac_input_voltage={self.ac_input_voltage}V,'
+            f' internal_current_three={self.internal_current_three}A,'
+            f' internal_power_three={self.internal_power_three}W,'
             f' ac_input_frequency={self.ac_input_frequency}Hz,'
+            f' dc_input_voltage={self.dc_input_voltage}V,'
+            f' dc_input_power={self.dc_input_power}W,'
+            f' dc_input_current={self.dc_input_current},'
             f' pack_num_max={self.pack_num_max},'
             f' pack_num={self.pack_num},'
-            f' pack_battery_percent={self.pack_battery_percent}%)'
+            f' pack_battery_percent={self.pack_battery_percent}%,'
+            f' pack_voltages={self.pack_voltages})'
         )
+
+    def _parse_voltages_field(self, offset: int, num: int):
+        data = self._read_data(offset, num)
+        values = list(struct.unpack(f'!{num}H', data))
+        return [Decimal(v) / 100 for v in values]
 
 
 class ControlPageParser(DataParser):

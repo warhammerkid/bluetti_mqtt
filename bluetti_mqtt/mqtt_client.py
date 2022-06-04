@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import re
 from typing import List
@@ -131,12 +132,64 @@ class MQTTClient:
                 payload=msg.parser.ac_output_mode.name.encode()
             )
             await client.publish(
+                topic_prefix + 'internal_ac_voltage',
+                payload=str(msg.parser.internal_ac_voltage).encode()
+            )
+            await client.publish(
+                topic_prefix + 'internal_current_one',
+                payload=str(msg.parser.internal_current_one).encode()
+            )
+            await client.publish(
+                topic_prefix + 'internal_power_one',
+                payload=str(msg.parser.internal_power_one).encode()
+            )
+            await client.publish(
+                topic_prefix + 'internal_ac_frequency',
+                payload=str(msg.parser.internal_ac_frequency).encode()
+            )
+            await client.publish(
+                topic_prefix + 'internal_current_two',
+                payload=str(msg.parser.internal_current_two).encode()
+            )
+            await client.publish(
+                topic_prefix + 'internal_power_two',
+                payload=str(msg.parser.internal_power_two).encode()
+            )
+            await client.publish(
                 topic_prefix + 'ac_input_voltage',
                 payload=str(msg.parser.ac_input_voltage).encode()
             )
             await client.publish(
+                topic_prefix + 'internal_current_three',
+                payload=str(msg.parser.internal_current_three).encode()
+            )
+            await client.publish(
+                topic_prefix + 'internal_power_three',
+                payload=str(msg.parser.internal_power_three).encode()
+            )
+            await client.publish(
                 topic_prefix + 'ac_input_frequency',
                 payload=str(msg.parser.ac_input_frequency).encode()
+            )
+            await client.publish(
+                topic_prefix + 'dc_input_voltage1',
+                payload=str(msg.parser.dc_input_voltage).encode()
+            )
+            await client.publish(
+                topic_prefix + 'dc_input_power1',
+                payload=str(msg.parser.dc_input_power).encode()
+            )
+            await client.publish(
+                topic_prefix + 'dc_input_current1',
+                payload=str(msg.parser.dc_input_current).encode()
+            )
+            pack_details = {
+                'percent': msg.parser.pack_battery_percent,
+                'voltages': [float(d) for d in msg.parser.pack_voltages],
+            }
+            await client.publish(
+                topic_prefix + f'pack_details{msg.parser.pack_num}',
+                payload=json.dumps(pack_details, separators=(',', ':')).encode()
             )
         elif isinstance(msg.parser, ControlPageParser):
             await client.publish(
