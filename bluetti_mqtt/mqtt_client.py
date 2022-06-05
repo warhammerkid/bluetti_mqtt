@@ -30,6 +30,8 @@ class MQTTClient:
 
     async def run(self):
         async with Client(self.host) as client:
+            logging.info('Connected to MQTT broker...')
+
             # Connect to event bus
             self.message_queue = asyncio.Queue()
             self.bus.add_parser_listener(self.handle_message)
@@ -89,7 +91,7 @@ class MQTTClient:
             mode = AutoSleepMode[str(mqtt_message.payload)]
             cmd = UpdateFieldCommand(0x0B, 0xF5, mode.value)
         else:
-            logging.debug(f'Recevied command for unknown topic: {m[3]} - {mqtt_message.topic}')
+            logging.warn(f'Recevied command for unknown topic: {m[3]} - {mqtt_message.topic}')
             return
 
         await self.bus.put(CommandMessage(device, cmd))

@@ -48,7 +48,7 @@ class BluetoothClientHandler:
         loop = asyncio.get_running_loop()
 
         # Start clients
-        logging.debug(f'Connecting to clients: {self.addresses}')
+        logging.info(f'Connecting to clients: {self.addresses}')
         self.clients = {d: BluetoothClient(d.address) for d in self.devices}
         self.client_tasks = [loop.create_task(c.run()) for c in self.clients.values()]
 
@@ -56,7 +56,7 @@ class BluetoothClientHandler:
         self.bus.add_command_listener(self.handle_command)
 
         # Poll the clients
-        logging.debug('Starting to poll clients...')
+        logging.info('Starting to poll clients...')
         await asyncio.gather(*[self._poll(d, c) for d, c in self.clients.items()])
 
     async def handle_command(self, msg: CommandMessage):

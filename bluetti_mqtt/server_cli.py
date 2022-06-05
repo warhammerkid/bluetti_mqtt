@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import logging
+import os
 from typing import Set
 import warnings
 import sys
@@ -66,9 +67,12 @@ class CommandLineHandler:
 
 
 def main(argv=None):
-    logging.basicConfig(level=logging.INFO)
-    logging.getLogger('bleak.backends.bluezdbus.scanner').setLevel(logging.INFO)
-    logging.getLogger('bleak.backends.bluezdbus.client').setLevel(logging.INFO)
-    warnings.simplefilter('always')
+    debug = os.environ.get('DEBUG')
+    if debug:
+        logging.basicConfig(level=logging.DEBUG)
+        warnings.simplefilter('always')
+    else:
+        logging.basicConfig(level=logging.INFO)
+
     cli = CommandLineHandler(argv)
     cli.execute()
