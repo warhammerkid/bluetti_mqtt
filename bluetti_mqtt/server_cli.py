@@ -25,7 +25,21 @@ class CommandLineHandler:
         parser.add_argument(
             '--broker',
             metavar='HOST',
+            dest='hostname',
             help='The MQTT broker host to connect to')
+        parser.add_argument(
+            '--port',
+            default=1883,
+            type=int,
+            help='The MQTT broker port to connect to - defaults to %(default)s')
+        parser.add_argument(
+            '--username',
+            type=str,
+            help='The optional MQTT broker username')
+        parser.add_argument(
+            '--password',
+            type=str,
+            help='The optional MQTT broker password')
         parser.add_argument(
             '--interval',
             default=0,
@@ -39,18 +53,18 @@ class CommandLineHandler:
         args = parser.parse_args()
         if args.scan:
             asyncio.run(scan_devices())
-        elif args.broker and len(args.addresses) > 0:
-            addresses = set(args.addresses)
-            asyncio.run(self.start(args.broker, args.interval, addresses))
+        elif args.hostname and len(args.addresses) > 0:
+            asyncio.run(self.start(args))
         else:
             parser.print_help()
 
-    async def start(self, broker: str, interval: int, addresses: Set[str]):
+    async def start(self, args: argparse.Namespace):
         loop = asyncio.get_running_loop()
         bus = EventBus()
 
         # Verify that we can see all the given addresses
-        bluetooth_handler = BluetoothClientHandler(addresses, interval, bus)
+        addresses = set(args.addresses)
+        bluetooth_handler = BluetoothClientHandler(addresses, args.interval, bus)
         devices = await bluetooth_handler.check()
         if len(devices) == 0:
             sys.exit('Could not find the given devices to connect to')
@@ -59,7 +73,14 @@ class CommandLineHandler:
         self.bluetooth_task = loop.create_task(bluetooth_handler.run())
 
         # Start MQTT client
-        mqtt_client = MQTTClient(broker, devices, bus)
+        mqtt_client = MQTTClient(
+            devices=devices,
+            bus=bus,
+            hostname=args.hostname,
+            port=args.port,
+            username=args.username,
+            password=args.password,
+        )
         self.mqtt_task = loop.create_task(mqtt_client.run())
 
         # Loop forever!

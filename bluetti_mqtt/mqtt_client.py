@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 import re
-from typing import List
+from typing import List, Optional
 from asyncio_mqtt import Client
 from paho.mqtt.client import MQTTMessage
 from bluetti_mqtt.bus import CommandMessage, EventBus, ParserMessage
@@ -23,13 +23,24 @@ COMMAND_TOPIC_RE = re.compile(r'^bluetti/command/(\w+)-(\d+)/([a-z_]+)$')
 class MQTTClient:
     message_queue: asyncio.Queue
 
-    def __init__(self, host: str, devices: List[BluettiDevice], bus: EventBus):
-        self.host = host
+    def __init__(
+        self,
+        devices: List[BluettiDevice],
+        bus: EventBus,
+        hostname: str,
+        port: int = 1883,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+    ):
         self.devices = devices
         self.bus = bus
+        self.hostname = hostname
+        self.port = port
+        self.username = username
+        self.password = password
 
     async def run(self):
-        async with Client(self.host) as client:
+        async with Client(hostname=self.hostname, port=self.port, username=self.username, password=self.password) as client:
             logging.info('Connected to MQTT broker...')
 
             # Connect to event bus
