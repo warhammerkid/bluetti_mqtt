@@ -1,0 +1,30 @@
+name: Build distribution
+
+on: [push, pull_request]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Python setup
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install build dependencies
+        run: python -m pip install build
+
+      - name: Build distributions
+        run: python -m build
+
+      - name: Publish to Test PyPI
+        if: github.repository == 'warhammerkid/bluetti_mqtt'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
