@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 0.6.0
 
 * Added support for configuring username / password / port for MQTT broker
 * Added proper signal handling. It now correctly shuts down when sent SIGTERM or SIGINT.
