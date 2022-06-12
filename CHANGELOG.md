@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Added support for configuring username / password / port for MQTT broker
+* Added proper signal handling. It now correctly shuts down when sent SIGTERM or SIGINT.
 
 ## 0.5.1
 

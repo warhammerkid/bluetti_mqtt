@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 import os
+import signal
 from typing import Set
 import warnings
 import sys
@@ -83,8 +84,24 @@ class CommandLineHandler:
         )
         self.mqtt_task = loop.create_task(mqtt_client.run())
 
-        # Loop forever!
-        await bus.run()
+        # Register signal handlers for safe shutdown
+        signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
+        for s in signals:
+            loop.add_signal_handler(s, lambda: asyncio.create_task(self.shutdown()))
+
+        # Run until cancelled
+        try:
+            await bus.run()
+        except asyncio.CancelledError:
+            logging.debug('Event bus run cancelled')
+
+    async def shutdown(self):
+        logging.info('Shutting down...')
+        loop = asyncio.get_running_loop()
+        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+        [task.cancel() for task in tasks]
+        await asyncio.gather(*tasks, return_exceptions=True)
+        loop.stop()
 
 
 def main(argv=None):
