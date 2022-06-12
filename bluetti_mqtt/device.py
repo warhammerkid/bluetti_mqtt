@@ -1,11 +1,8 @@
-class BluettiDevice:
-    def __init__(self, address: str, type: str, sn: str):
-        self.address = address
-        self.type = type
-        self.sn = sn
+from dataclasses import dataclass
 
-    def __repr__(self):
-        return (
-            f'BluettiDevice(address={self.address}, type={self.type},'
-            f' sn={self.sn})'
-        )
+
+@dataclass(frozen=True)
+class BluettiDevice:
+    address: str
+    type: str
+    sn: str

@@ -1,19 +1,20 @@
 import asyncio
+from dataclasses import dataclass
 import logging
 from typing import Callable, List, Union
 from bluetti_mqtt.commands import DeviceCommand
 from bluetti_mqtt.device import BluettiDevice
 from bluetti_mqtt.parser import DataParser
 
+@dataclass(frozen=True)
 class ParserMessage:
-    def __init__(self, device: BluettiDevice, parser: DataParser):
-        self.device = device
-        self.parser = parser
+    device: BluettiDevice
+    parser: DataParser
 
+@dataclass(frozen=True)
 class CommandMessage:
-    def __init__(self, device: BluettiDevice, command: DeviceCommand):
-        self.device = device
-        self.command = command
+    device: BluettiDevice
+    command: DeviceCommand
 
 class EventBus:
     parser_listeners: List[Callable[[ParserMessage], None]]
