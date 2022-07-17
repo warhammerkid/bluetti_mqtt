@@ -1,5 +1,9 @@
 # Change Log
 
+## FUTURE
+
+* Added support for paging through batteries in the logger to collect more information about how things work.
+
 ## 0.6.0
 
 * Added support for configuring username / password / port for MQTT broker
