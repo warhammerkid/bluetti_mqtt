@@ -3,7 +3,7 @@ import json
 import logging
 import re
 from typing import List, Optional
-from asyncio_mqtt import Client
+from asyncio_mqtt import Client, MqttError
 from paho.mqtt.client import MQTTMessage
 from bluetti_mqtt.bus import CommandMessage, EventBus, ParserMessage
 from bluetti_mqtt.commands import DeviceCommand, UpdateFieldCommand
@@ -40,18 +40,24 @@ class MQTTClient:
         self.password = password
 
     async def run(self):
-        async with Client(hostname=self.hostname, port=self.port, username=self.username, password=self.password) as client:
-            logging.info('Connected to MQTT broker...')
+        while True:
+            logging.info('Connecting to MQTT broker...')
+            try:
+                async with Client(hostname=self.hostname, port=self.port, username=self.username, password=self.password) as client:
+                    logging.info('Connected to MQTT broker')
 
-            # Connect to event bus
-            self.message_queue = asyncio.Queue()
-            self.bus.add_parser_listener(self.handle_message)
+                    # Connect to event bus
+                    self.message_queue = asyncio.Queue()
+                    self.bus.add_parser_listener(self.handle_message)
 
-            # Handle pub/sub
-            await asyncio.gather(
-                self._handle_commands(client),
-                self._handle_messages(client)
-            )
+                    # Handle pub/sub
+                    await asyncio.gather(
+                        self._handle_commands(client),
+                        self._handle_messages(client)
+                    )
+            except MqttError as error:
+                logging.error(f'MQTT error: {error}')
+                await asyncio.sleep(5)
 
     async def handle_message(self, msg: ParserMessage):
         await self.message_queue.put(msg)

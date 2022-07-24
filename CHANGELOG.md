@@ -3,6 +3,7 @@
 ## FUTURE
 
 * Fix bug in logging multiple batteries where the last slot was skipped.
+* Automatically reconnect to broker if disconnected
 
 ## 0.6.1
 
