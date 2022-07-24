@@ -83,9 +83,9 @@ async def log(address: str, path: str):
             await log_command(device, QueryRangeCommand(0x00, 0x00, 0x46), log_file)
             await log_command(device, QueryRangeCommand(0x0B, 0xB9, 0x3D), log_file)
 
-            for pack in range(1, pack_max):
+            for pack in range(1, pack_max + 1):
                 await log_command(device, UpdateFieldCommand(0x0B, 0xBE, pack), log_file)
-                await asyncio.sleep(1) # We need to wait after switching packs for the data to be available
+                await asyncio.sleep(10) # We need to wait after switching packs for the data to be available
                 await log_command(device, QueryRangeCommand(0x00, 0x46, 0x42), log_file)
                 await log_command(device, QueryRangeCommand(0x00, 0x88, 0x4a), log_file)
 

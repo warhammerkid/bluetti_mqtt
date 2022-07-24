@@ -1,5 +1,9 @@
 # Change Log
 
+## FUTURE
+
+* Fix bug in logging multiple batteries where the last slot was skipped.
+
 ## 0.6.1
 
 * Added support for paging through batteries in the logger to collect more information about how things work.
