@@ -64,7 +64,7 @@ class BluetoothClient:
                     # Make request
                     await client.write_gatt_char(
                         self.WRITE_UUID,
-                        self.current_command)
+                        bytes(self.current_command))
 
                     # Wait for response
                     res = await asyncio.wait_for(
