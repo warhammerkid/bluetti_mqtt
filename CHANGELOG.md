@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+## 0.6.3
+
 * Fix bug with scanning unnamed devices for WinRT bluetooth backend
 * Fix bug with converting commands to bytes for WinRT & macOS blueooth backend
 * Fix issue with using an unsupported event loop on Windows for asyncio-mqtt
