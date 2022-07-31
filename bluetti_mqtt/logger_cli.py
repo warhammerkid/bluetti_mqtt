@@ -8,22 +8,11 @@ import re
 import textwrap
 import time
 from bleak import BleakScanner
+from bluetti_mqtt.bluetooth import scan_devices
 from bluetti_mqtt.bluetooth.client import BluetoothClient
 from bluetti_mqtt.bluetooth.exc import InvalidRequestError, ParseError, BadConnectionError
 from bluetti_mqtt.commands import QueryRangeCommand, UpdateFieldCommand, DeviceCommand
 from bluetti_mqtt.parser import MidStatusPageParser
-
-
-async def scan():
-    print('Scanning....')
-    devices = await BleakScanner.discover()
-    if len(devices) == 0:
-        print('0 devices found - something probably went wrong')
-    else:
-        prefix = re.compile(r'^(AC200M|AC300|EP500P|EP500)\d+$')
-        bluetti_devices = [d for d in devices if prefix.match(d.name)]
-        for d in bluetti_devices:
-            print(f'Found {d.name}: address {d.address}')
 
 
 def log_packet(output: TextIOWrapper, data: bytes, command: DeviceCommand):
@@ -116,7 +105,7 @@ def main():
         help='The device MAC to connect to for logging')
     args = parser.parse_args()
     if args.scan:
-        asyncio.run(scan())
+        asyncio.run(scan_devices())
     elif args.log:
         asyncio.run(log(args.address, args.log))
     else:

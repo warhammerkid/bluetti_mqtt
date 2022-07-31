@@ -51,6 +51,12 @@ class CommandLineHandler:
             metavar='ADDRESS',
             nargs='*',
             help='The device MAC(s) to connect to')
+
+        # The default event loop on windows doesn't support add_reader, which
+        # is required by asyncio-mqtt
+        if sys.platform == 'win32':
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
         args = parser.parse_args()
         if args.scan:
             asyncio.run(scan_devices())
@@ -85,9 +91,10 @@ class CommandLineHandler:
         self.mqtt_task = loop.create_task(mqtt_client.run())
 
         # Register signal handlers for safe shutdown
-        signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
-        for s in signals:
-            loop.add_signal_handler(s, lambda: asyncio.create_task(self.shutdown()))
+        if sys.platform != 'win32':
+            signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
+            for s in signals:
+                loop.add_signal_handler(s, lambda: asyncio.create_task(self.shutdown()))
 
         # Run until cancelled
         try:
