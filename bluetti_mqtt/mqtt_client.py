@@ -50,6 +50,9 @@ class MQTTClient:
                     self.message_queue = asyncio.Queue()
                     self.bus.add_parser_listener(self.handle_message)
 
+                    # Announce device to Home Assistant
+                    await self._send_discovery_message(client)
+
                     # Handle pub/sub
                     await asyncio.gather(
                         self._handle_commands(client),
@@ -113,9 +116,121 @@ class MQTTClient:
 
         await self.bus.put(CommandMessage(device, cmd))
 
+    async def _send_discovery_message(self, client: Client):
+
+        
+        def payload(id: str, device: BluettiDevice, **kwargs) -> str:
+            payload_dict = {
+                'state_topic': f'bluetti/state/{device.type}-{device.sn}/{id}',
+                'device': {
+                    'identifiers': [
+                        f'{device.sn}'
+                    ],
+                    'manufacturer': 'Bluetti',
+                    'name': f'{device.type} {device.sn}',
+                    'model': device.type
+                },
+                'unique_id': f'{device.sn}_{id}',
+            }
+
+            for key, value in kwargs.items():
+                payload_dict[key] = value
+
+            return json.dumps(payload_dict)
+
+        # Loop through devices
+        for d in self.devices:
+            await client.publish(f'homeassistant/sensor/{d.sn}_ac_input_power/config',
+                                 payload=payload(
+                                     id='ac_input_power',
+                                     device=d,
+                                     name='AC Input Power',
+                                     unit_of_measurement='W',
+                                     device_class='power',
+                                     state_class='measurement',
+                                     force_update=True)
+                                     .encode(),
+                                 retain=True
+                                 )
+
+            await client.publish(f'homeassistant/sensor/{d.sn}_dc_input_power/config',
+                                 payload=payload(
+                                     id='dc_input_power',
+                                     device=d,
+                                     name='DC Input Power',
+                                     unit_of_measurement='W',
+                                     device_class='power',
+                                     state_class='measurement',
+                                     force_update=True)
+                                     .encode(),
+                                 retain=True
+                                 )
+
+            await client.publish(f'homeassistant/sensor/{d.sn}_ac_output_power/config',
+                        payload=payload(
+                            id='ac_output_power',
+                            device=d,
+                            name='AC Output Power',
+                            unit_of_measurement='W',
+                            device_class='power',
+                            state_class='measurement',
+                            force_update=True)
+                            .encode(),
+                        retain=True
+                        )
+
+            await client.publish(f'homeassistant/sensor/{d.sn}_dc_output_power/config',
+                        payload=payload(
+                            id='dc_output_power',
+                            device=d,
+                            name='DC Output Power',
+                            unit_of_measurement='W',
+                            device_class='power',
+                            state_class='measurement',
+                            force_update=True)
+                            .encode(),
+                        retain=True
+                        )
+
+            await client.publish(f'homeassistant/sensor/{d.sn}_total_battery_percent/config',
+                        payload=payload(
+                            id='total_battery_percent',
+                            device=d,
+                            name='Total Battery Percent',
+                            unit_of_measurement='%',
+                            device_class='battery',
+                            state_class='measurement')
+                            .encode(),
+                        retain=True
+                        )
+
+            await client.publish(f'homeassistant/binary_sensor/{d.sn}_ac_output_on/config',
+                        payload=payload(
+                            id='ac_output_on',
+                            device=d,
+                            name='AC Output',
+                            device_class='power')
+                            .encode(),
+                        retain=True
+                        )
+
+            await client.publish(f'homeassistant/binary_sensor/{d.sn}_dc_output_on/config',
+                        payload=payload(
+                            id='dc_output_on',
+                            device=d,
+                            name='DC Output',
+                            device_class='power')
+                            .encode(),
+                        retain=True
+                        )
+
+            logging.info(f'Sent discovery message of {d.type}-{d.sn} to Home Assistant')
+
+
     async def _handle_message(self, client: Client, msg: ParserMessage):
         logging.debug(f'Got a message from {msg.device}: {msg.parser}')
         topic_prefix = f'bluetti/state/{msg.device.type}-{msg.device.sn}/'
+
         if isinstance(msg.parser, LowerStatusPageParser):
             await client.publish(
                 topic_prefix + 'ac_input_power',
