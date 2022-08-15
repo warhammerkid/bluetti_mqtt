@@ -7,12 +7,12 @@ from bleak import BleakScanner
 from bleak.backends.device import BLEDevice
 from bluetti_mqtt.bus import CommandMessage, EventBus, ParserMessage
 from bluetti_mqtt.commands import QueryRangeCommand
-from bluetti_mqtt.devices import BluettiDevice, AC200M, AC300, EP500, EP500P
+from bluetti_mqtt.devices import BluettiDevice, AC200M, AC300, EP500, EP500P, EB3A
 from bluetti_mqtt.bluetooth.client import BluetoothClient
 from bluetti_mqtt.bluetooth.exc import BadConnectionError, ParseError
 
 
-DEVICE_NAME_RE = re.compile(r'^(AC200M|AC300|EP500P|EP500)(\d+)$')
+DEVICE_NAME_RE = re.compile(r'^(AC200M|AC300|EP500P|EP500|EB3A)(\d+)$')
 
 
 class BluetoothClientHandler:
@@ -54,7 +54,7 @@ class BluetoothClientHandler:
                 continue
 
             start_time = time.monotonic()
-            await self._poll_with_command(device, client, QueryRangeCommand(0x00, 0x00, 0x46))
+            await self._poll_with_command(device, client, QueryRangeCommand(0x00, 0x0A, 0x3C))
             await self._poll_with_command(device, client, QueryRangeCommand(0x00, 0x46, 0x42))
             await self._poll_with_command(device, client, QueryRangeCommand(0x0B, 0xB9, 0x3D))
             elapsed = time.monotonic() - start_time
@@ -101,4 +101,5 @@ async def check_addresses(addresses: Set[str]):
         if match[1] == 'AC300': return AC300(device.address, match[2])
         if match[1] == 'EP500': return EP500(device.address, match[2])
         if match[1] == 'EP500P': return EP500P(device.address, match[2])
+        if match[1] == 'EB3A': return EB3A(device.address, match[2])
     return [build_device(d) for d in filtered]

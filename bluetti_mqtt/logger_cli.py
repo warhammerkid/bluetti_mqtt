@@ -75,7 +75,7 @@ async def log(address: str, path: str):
 
         # Poll device
         while True:
-            await log_command(client, device, QueryRangeCommand(0x00, 0x00, 0x46), log_file)
+            await log_command(client, device, QueryRangeCommand(0x00, 0x0A, 0x3C), log_file)
             await log_command(client, device, QueryRangeCommand(0x0B, 0xB9, 0x3D), log_file)
 
             for pack in range(1, pack_max + 1):

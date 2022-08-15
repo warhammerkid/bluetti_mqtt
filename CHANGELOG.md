@@ -4,6 +4,7 @@
 
 * Add support for Home Assistant discovery (@lbossle)
 * Re-architect parsing to support device-specific customization
+* Add beta support for EB3A
 
 ## 0.6.3
 
