@@ -1,19 +1,13 @@
 import asyncio
-import itertools
 import logging
 import re
 import time
-from typing import Dict, List, Set, Type
+from typing import Dict, List, Set
 from bleak import BleakScanner
 from bleak.backends.device import BLEDevice
 from bluetti_mqtt.bus import CommandMessage, EventBus, ParserMessage
-from bluetti_mqtt.device import BluettiDevice
-from bluetti_mqtt.parser import (
-    ControlPageParser,
-    DataParser,
-    LowerStatusPageParser,
-    MidStatusPageParser
-)
+from bluetti_mqtt.commands import QueryRangeCommand
+from bluetti_mqtt.devices import BluettiDevice, AC200M, AC300, EP500, EP500P
 from bluetti_mqtt.bluetooth.client import BluetoothClient
 from bluetti_mqtt.bluetooth.exc import BadConnectionError, ParseError
 
@@ -22,33 +16,20 @@ DEVICE_NAME_RE = re.compile(r'^(AC200M|AC300|EP500P|EP500)(\d+)$')
 
 
 class BluetoothClientHandler:
-    devices: List[BluettiDevice]
     clients: Dict[BluettiDevice, BluetoothClient]
 
-    def __init__(self, addresses: Set[str], interval: int, bus: EventBus):
-        self.addresses = addresses
+    def __init__(self, devices: List[BluettiDevice], interval: int, bus: EventBus):
+        self.devices = devices
         self.interval = interval
         self.bus = bus
-        self.devices = []
         self.clients = {}
-
-    async def check(self):
-        logging.debug(f'Checking we can connect: {self.addresses}')
-        devices = await BleakScanner.discover()
-        filtered = [d for d in devices if d.address in self.addresses]
-        logging.debug(f'Found devices: {filtered}')
-        if len(filtered) == len(self.addresses):
-            def build_device(device: BLEDevice) -> BluettiDevice:
-                match = DEVICE_NAME_RE.match(device.name)
-                return BluettiDevice(device.address, match[1], match[2])
-            self.devices = [build_device(d) for d in filtered]
-        return self.devices
 
     async def run(self):
         loop = asyncio.get_running_loop()
 
         # Start clients
-        logging.info(f'Connecting to clients: {self.addresses}')
+        addresses = [d.address for d in self.devices]
+        logging.info(f'Connecting to clients: {addresses}')
         self.clients = {d: BluetoothClient(d.address) for d in self.devices}
         self.client_tasks = [loop.create_task(c.run()) for c in self.clients.values()]
 
@@ -73,21 +54,20 @@ class BluetoothClientHandler:
                 continue
 
             start_time = time.monotonic()
-            await self._poll_with_parser(device, client, LowerStatusPageParser)
-            await self._poll_with_parser(device, client, MidStatusPageParser)
-            await self._poll_with_parser(device, client, ControlPageParser)
+            await self._poll_with_command(device, client, QueryRangeCommand(0x00, 0x00, 0x46))
+            await self._poll_with_command(device, client, QueryRangeCommand(0x00, 0x46, 0x42))
+            await self._poll_with_command(device, client, QueryRangeCommand(0x0B, 0xB9, 0x3D))
             elapsed = time.monotonic() - start_time
 
             # Limit polling rate if interval provided
             if self.interval > 0 and self.interval > elapsed:
                 await asyncio.sleep(self.interval - elapsed)
 
-    async def _poll_with_parser(self, device: BluettiDevice, client: BluetoothClient, parser: Type[DataParser]):
-        command = parser.build_query_command()
+    async def _poll_with_command(self, device: BluettiDevice, client: BluetoothClient, command: QueryRangeCommand):
         result_future = await client.perform(command)
         try:
             result = await result_future
-            parsed = parser(result[3:-2]).parse()
+            parsed = device.parse(command.page, command.offset, result[3:-2])
             await self.bus.put(ParserMessage(device, parsed))
         except ParseError:
             logging.debug('Got a parse exception...')
@@ -104,3 +84,21 @@ async def scan_devices():
         bluetti_devices = [d for d in devices if d.name and DEVICE_NAME_RE.match(d.name)]
         for d in bluetti_devices:
             print(f'Found {d.name}: address {d.address}')
+
+
+async def check_addresses(addresses: Set[str]):
+    logging.debug(f'Checking we can connect: {addresses}')
+    devices = await BleakScanner.discover()
+    filtered = [d for d in devices if d.address in addresses]
+    logging.debug(f'Found devices: {filtered}')
+
+    if len(filtered) != len(addresses):
+        return []
+
+    def build_device(device: BLEDevice) -> BluettiDevice:
+        match = DEVICE_NAME_RE.match(device.name)
+        if match[1] == 'AC200M': return AC200M(device.address, match[2])
+        if match[1] == 'AC300': return AC300(device.address, match[2])
+        if match[1] == 'EP500': return EP500(device.address, match[2])
+        if match[1] == 'EP500P': return EP500P(device.address, match[2])
+    return [build_device(d) for d in filtered]

@@ -2,18 +2,15 @@ import argparse
 import asyncio
 import base64
 from io import TextIOWrapper
-import itertools
 import json
-import re
+import sys
 import textwrap
 import time
-import sys
-from bleak import BleakScanner
-from bluetti_mqtt.bluetooth import scan_devices
+from bluetti_mqtt.bluetooth import check_addresses, scan_devices
 from bluetti_mqtt.bluetooth.client import BluetoothClient
 from bluetti_mqtt.bluetooth.exc import InvalidRequestError, ParseError, BadConnectionError
 from bluetti_mqtt.commands import QueryRangeCommand, UpdateFieldCommand, DeviceCommand
-from bluetti_mqtt.parser import MidStatusPageParser
+from bluetti_mqtt.devices import BluettiDevice
 
 
 def log_packet(output: TextIOWrapper, data: bytes, command: DeviceCommand):
@@ -36,10 +33,13 @@ def log_invalid(output: TextIOWrapper, err: InvalidRequestError, command: Device
     output.write(json.dumps(log_entry) + '\n')
 
 
-async def log_command(device: BluetoothClient, command: DeviceCommand, log_file: TextIOWrapper):
-    result_future = await device.perform(command)
+async def log_command(client: BluetoothClient, device: BluettiDevice, command: DeviceCommand, log_file: TextIOWrapper):
+    result_future = await client.perform(command)
     try:
         result = await result_future
+        if isinstance(command, QueryRangeCommand):
+            parsed = device.parse(command.page, command.offset, result[3:-2])
+            print(parsed)
         log_packet(log_file, result, command)
     except InvalidRequestError as err:
         print('Got a "invalid request" error')
@@ -51,33 +51,38 @@ async def log_command(device: BluetoothClient, command: DeviceCommand, log_file:
 
 
 async def log(address: str, path: str):
-    print(f'Connecting to {address}')
-    device = BluetoothClient(address)
-    asyncio.get_running_loop().create_task(device.run())
+    devices = await check_addresses({address})
+    if len(devices) == 0:
+        sys.exit('Could not find the given device to connect to')
+    device = devices[0]
+
+    print(f'Connecting to {device.address}')
+    client = BluetoothClient(device.address)
+    asyncio.get_running_loop().create_task(client.run())
 
     with open(path, 'a') as log_file:
         # Wait for device connection
-        while not device.is_connected:
+        while not client.is_connected:
             print('Waiting for connection...')
             await asyncio.sleep(1)
             continue
 
         # Get pack max
-        result_future = await device.perform(MidStatusPageParser.build_query_command())
+        result_future = await client.perform(QueryRangeCommand(0x00, 0x5B, 1))
         result = await result_future
-        pack_max = MidStatusPageParser(result[3:-2]).parse().pack_num_max
+        pack_max = device.parse(0x00, 0x5B, result[3:-2])['pack_num_max']
         print(f'Device has a maximum of {pack_max} battery packs')
 
         # Poll device
         while True:
-            await log_command(device, QueryRangeCommand(0x00, 0x00, 0x46), log_file)
-            await log_command(device, QueryRangeCommand(0x0B, 0xB9, 0x3D), log_file)
+            await log_command(client, device, QueryRangeCommand(0x00, 0x00, 0x46), log_file)
+            await log_command(client, device, QueryRangeCommand(0x0B, 0xB9, 0x3D), log_file)
 
             for pack in range(1, pack_max + 1):
-                await log_command(device, UpdateFieldCommand(0x0B, 0xBE, pack), log_file)
+                await log_command(client, device, UpdateFieldCommand(0x0B, 0xBE, pack), log_file)
                 await asyncio.sleep(10) # We need to wait after switching packs for the data to be available
-                await log_command(device, QueryRangeCommand(0x00, 0x46, 0x42), log_file)
-                await log_command(device, QueryRangeCommand(0x00, 0x88, 0x4a), log_file)
+                await log_command(client, device, QueryRangeCommand(0x00, 0x46, 0x42), log_file)
+                await log_command(client, device, QueryRangeCommand(0x00, 0x88, 0x4a), log_file)
 
 
 def main():

@@ -6,15 +6,8 @@ from typing import List, Optional
 from asyncio_mqtt import Client, MqttError
 from paho.mqtt.client import MQTTMessage
 from bluetti_mqtt.bus import CommandMessage, EventBus, ParserMessage
-from bluetti_mqtt.commands import DeviceCommand, UpdateFieldCommand
-from bluetti_mqtt.device import BluettiDevice
-from bluetti_mqtt.parser import (
-    AutoSleepMode,
-    ControlPageParser,
-    LowerStatusPageParser,
-    MidStatusPageParser,
-    UpsMode,
-)
+from bluetti_mqtt.commands import DeviceCommand
+from bluetti_mqtt.devices import BluettiDevice
 
 
 COMMAND_TOPIC_RE = re.compile(r'^bluetti/command/(\w+)-(\d+)/([a-z_]+)$')
@@ -90,28 +83,20 @@ class MQTTClient:
             logging.warn(f'unknown device: {m[1]} {m[2]}')
             return
 
-        # Build the command
-        cmd: DeviceCommand = None
-        if m[3] == 'ups_mode':
-            mode = UpsMode[str(mqtt_message.payload)]
-            cmd = UpdateFieldCommand(0x0B, 0xB9, mode.value)
-        elif m[3] == 'ac_output_on':
-            value = 1 if mqtt_message.payload == b'ON' else 0
-            cmd = UpdateFieldCommand(0x0B, 0xBF, value)
-        elif m[3] == 'dc_output_on':
-            value = 1 if mqtt_message.payload == b'ON' else 0
-            cmd = UpdateFieldCommand(0x0B, 0xC0, value)
-        elif m[3] == 'grid_charge_on':
-            value = 1 if mqtt_message.payload == b'ON' else 0
-            cmd = UpdateFieldCommand(0x0B, 0xC3, value)
-        elif m[3] == 'time_control_on':
-            value = 1 if mqtt_message.payload == b'ON' else 0
-            cmd = UpdateFieldCommand(0x0B, 0xC5, value)
-        elif m[3] == 'auto_sleep_mode':
-            mode = AutoSleepMode[str(mqtt_message.payload)]
-            cmd = UpdateFieldCommand(0x0B, 0xF5, mode.value)
-        else:
+        # Check if the device supports setting this field
+        if not device.has_field_setter(m[3]):
             logging.warn(f'Recevied command for unknown topic: {m[3]} - {mqtt_message.topic}')
+            return
+
+        cmd: DeviceCommand = None
+        if m[3] == 'ups_mode' or m[3] == 'auto_sleep_mode':
+            value = mqtt_message.payload.decode('ascii')
+            cmd = device.build_setter_command(m[3], value)
+        elif m[3] == 'ac_output_on' or m[3] == 'dc_output_on' or m[3] == 'grid_charge_on' or m[3] == 'time_control_on':
+            value = mqtt_message.payload == b'ON'
+            cmd = device.build_setter_command(m[3], value)
+        else:
+            logging.warn(f'Recevied command for unhandled topic: {m[3]} - {mqtt_message.topic}')
             return
 
         await self.bus.put(CommandMessage(device, cmd))
@@ -231,133 +216,150 @@ class MQTTClient:
 
 
     async def _handle_message(self, client: Client, msg: ParserMessage):
-        logging.debug(f'Got a message from {msg.device}: {msg.parser}')
+        logging.debug(f'Got a message from {msg.device}: {msg.parsed}')
         topic_prefix = f'bluetti/state/{msg.device.type}-{msg.device.sn}/'
 
-        if isinstance(msg.parser, LowerStatusPageParser):
+        if 'ac_input_power' in msg.parsed:
             await client.publish(
                 topic_prefix + 'ac_input_power',
-                payload=str(msg.parser.ac_input_power).encode()
+                payload=str(msg.parsed['ac_input_power']).encode()
             )
+        if 'dc_input_power' in msg.parsed:
             await client.publish(
                 topic_prefix + 'dc_input_power',
-                payload=str(msg.parser.dc_input_power).encode()
+                payload=str(msg.parsed['dc_input_power']).encode()
             )
+        if 'ac_output_power' in msg.parsed:
             await client.publish(
                 topic_prefix + 'ac_output_power',
-                payload=str(msg.parser.ac_output_power).encode()
+                payload=str(msg.parsed['ac_output_power']).encode()
             )
+        if 'dc_output_power' in msg.parsed:
             await client.publish(
                 topic_prefix + 'dc_output_power',
-                payload=str(msg.parser.dc_output_power).encode()
+                payload=str(msg.parsed['dc_output_power']).encode()
             )
+        if 'total_battery_percent' in msg.parsed:
             await client.publish(
                 topic_prefix + 'total_battery_percent',
-                payload=str(msg.parser.total_battery_percent).encode()
+                payload=str(msg.parsed['total_battery_percent']).encode()
             )
+        if 'ac_output_on' in msg.parsed:
             await client.publish(
                 topic_prefix + 'ac_output_on',
-                payload=('ON' if msg.parser.ac_output_on else 'OFF').encode()
+                payload=('ON' if msg.parsed['ac_output_on'] else 'OFF').encode()
             )
+        if 'dc_output_on' in msg.parsed:
             await client.publish(
                 topic_prefix + 'dc_output_on',
-                payload=('ON' if msg.parser.dc_output_on else 'OFF').encode()
+                payload=('ON' if msg.parsed['dc_output_on'] else 'OFF').encode()
             )
-        elif isinstance(msg.parser, MidStatusPageParser):
+        if 'ac_output_mode' in msg.parsed:
             await client.publish(
                 topic_prefix + 'ac_output_mode',
-                payload=msg.parser.ac_output_mode.name.encode()
+                payload=msg.parsed['ac_output_mode'].name.encode()
             )
+        if 'internal_ac_voltage' in msg.parsed:
             await client.publish(
                 topic_prefix + 'internal_ac_voltage',
-                payload=str(msg.parser.internal_ac_voltage).encode()
+                payload=str(msg.parsed['internal_ac_voltage']).encode()
             )
+        if 'internal_current_one' in msg.parsed:
             await client.publish(
                 topic_prefix + 'internal_current_one',
-                payload=str(msg.parser.internal_current_one).encode()
+                payload=str(msg.parsed['internal_current_one']).encode()
             )
+        if 'internal_power_one' in msg.parsed:
             await client.publish(
                 topic_prefix + 'internal_power_one',
-                payload=str(msg.parser.internal_power_one).encode()
+                payload=str(msg.parsed['internal_power_one']).encode()
             )
+        if 'internal_ac_frequency' in msg.parsed:
             await client.publish(
                 topic_prefix + 'internal_ac_frequency',
-                payload=str(msg.parser.internal_ac_frequency).encode()
+                payload=str(msg.parsed['internal_ac_frequency']).encode()
             )
+        if 'internal_current_two' in msg.parsed:
             await client.publish(
                 topic_prefix + 'internal_current_two',
-                payload=str(msg.parser.internal_current_two).encode()
+                payload=str(msg.parsed['internal_current_two']).encode()
             )
+        if 'internal_power_two' in msg.parsed:
             await client.publish(
                 topic_prefix + 'internal_power_two',
-                payload=str(msg.parser.internal_power_two).encode()
+                payload=str(msg.parsed['internal_power_two']).encode()
             )
+        if 'ac_input_voltage' in msg.parsed:
             await client.publish(
                 topic_prefix + 'ac_input_voltage',
-                payload=str(msg.parser.ac_input_voltage).encode()
+                payload=str(msg.parsed['ac_input_voltage']).encode()
             )
+        if 'internal_current_three' in msg.parsed:
             await client.publish(
                 topic_prefix + 'internal_current_three',
-                payload=str(msg.parser.internal_current_three).encode()
+                payload=str(msg.parsed['internal_current_three']).encode()
             )
+        if 'internal_power_three' in msg.parsed:
             await client.publish(
                 topic_prefix + 'internal_power_three',
-                payload=str(msg.parser.internal_power_three).encode()
+                payload=str(msg.parsed['internal_power_three']).encode()
             )
+        if 'ac_input_frequency' in msg.parsed:
             await client.publish(
                 topic_prefix + 'ac_input_frequency',
-                payload=str(msg.parser.ac_input_frequency).encode()
+                payload=str(msg.parsed['ac_input_frequency']).encode()
             )
+        if 'dc_input_voltage' in msg.parsed:
             await client.publish(
                 topic_prefix + 'dc_input_voltage1',
-                payload=str(msg.parser.dc_input_voltage).encode()
+                payload=str(msg.parsed['dc_input_voltage']).encode()
             )
+        if 'dc_input_power' in msg.parsed:
             await client.publish(
                 topic_prefix + 'dc_input_power1',
-                payload=str(msg.parser.dc_input_power).encode()
+                payload=str(msg.parsed['dc_input_power']).encode()
             )
+        if 'dc_input_current' in msg.parsed:
             await client.publish(
                 topic_prefix + 'dc_input_current1',
-                payload=str(msg.parser.dc_input_current).encode()
+                payload=str(msg.parsed['dc_input_current']).encode()
             )
+        if 'pack_battery_percent' in msg.parsed:
             pack_details = {
-                'percent': msg.parser.pack_battery_percent,
-                'voltages': [float(d) for d in msg.parser.pack_voltages],
+                'percent': msg.parsed['pack_battery_percent'],
+                'voltages': [float(d) for d in msg.parsed['cell_voltages']],
             }
             await client.publish(
-                topic_prefix + f'pack_details{msg.parser.pack_num}',
+                topic_prefix + f'pack_details{msg.parsed["pack_num"]}',
                 payload=json.dumps(pack_details, separators=(',', ':')).encode()
             )
-        elif isinstance(msg.parser, ControlPageParser):
+        if 'ups_mode' in msg.parsed:
             await client.publish(
                 topic_prefix + 'ups_mode',
-                payload=msg.parser.ups_mode.name.encode()
+                payload=msg.parsed['ups_mode'].name.encode()
             )
-            await client.publish(
-                topic_prefix + 'ac_output_on',
-                payload=('ON' if msg.parser.ac_output_on else 'OFF').encode()
-            )
-            await client.publish(
-                topic_prefix + 'dc_output_on',
-                payload=('ON' if msg.parser.dc_output_on else 'OFF').encode()
-            )
+        if 'grid_charge_on' in msg.parsed:
             await client.publish(
                 topic_prefix + 'grid_charge_on',
-                payload=('ON' if msg.parser.grid_charge_on else 'OFF').encode()
+                payload=('ON' if msg.parsed['grid_charge_on'] else 'OFF').encode()
             )
+        if 'time_control_on' in msg.parsed:
             await client.publish(
                 topic_prefix + 'time_control_on',
-                payload=('ON' if msg.parser.time_control_on else 'OFF').encode()
+                payload=('ON' if msg.parsed['time_control_on'] else 'OFF').encode()
             )
+        if 'battery_range_start' in msg.parsed:
             await client.publish(
                 topic_prefix + 'battery_range_start',
-                payload=str(msg.parser.battery_range_start).encode()
+                payload=str(msg.parsed['battery_range_start']).encode()
             )
+        if 'battery_range_end' in msg.parsed:
             await client.publish(
                 topic_prefix + 'battery_range_end',
-                payload=str(msg.parser.battery_range_end).encode()
+                payload=str(msg.parsed['battery_range_end']).encode()
             )
+        if 'auto_sleep_mode' in msg.parsed:
             await client.publish(
                 topic_prefix + 'auto_sleep_mode',
-                payload=msg.parser.auto_sleep_mode.name.encode()
+                payload=msg.parsed['auto_sleep_mode'].name.encode()
             )

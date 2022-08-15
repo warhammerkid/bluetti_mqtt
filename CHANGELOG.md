@@ -3,6 +3,7 @@
 ## FUTURE
 
 * Add support for Home Assistant discovery (@lbossle)
+* Re-architect parsing to support device-specific customization
 
 ## 0.6.3
 
