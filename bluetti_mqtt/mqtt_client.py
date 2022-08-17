@@ -120,8 +120,10 @@ class MQTTClient:
 
         
         def payload(id: str, device: BluettiDevice, **kwargs) -> str:
+            # Unknown keys are allowed but ignored by Home Assistant
             payload_dict = {
                 'state_topic': f'bluetti/state/{device.type}-{device.sn}/{id}',
+                'command_topic': f'bluetti/command/{device.type}-{device.sn}/{id}',
                 'device': {
                     'identifiers': [
                         f'{device.sn}'
@@ -131,6 +133,7 @@ class MQTTClient:
                     'model': device.type
                 },
                 'unique_id': f'{device.sn}_{id}',
+                'object_id': f'{device.type}_{id}',
             }
 
             for key, value in kwargs.items():
@@ -204,22 +207,22 @@ class MQTTClient:
                         retain=True
                         )
 
-            await client.publish(f'homeassistant/binary_sensor/{d.sn}_ac_output_on/config',
+            await client.publish(f'homeassistant/switch/{d.sn}_ac_output_on/config',
                         payload=payload(
                             id='ac_output_on',
                             device=d,
                             name='AC Output',
-                            device_class='power')
+                            device_class='outlet')
                             .encode(),
                         retain=True
                         )
 
-            await client.publish(f'homeassistant/binary_sensor/{d.sn}_dc_output_on/config',
+            await client.publish(f'homeassistant/switch/{d.sn}_dc_output_on/config',
                         payload=payload(
                             id='dc_output_on',
                             device=d,
                             name='DC Output',
-                            device_class='power')
+                            device_class='outlet')
                             .encode(),
                         retain=True
                         )
