@@ -23,7 +23,7 @@ def log_packet(output: TextIOWrapper, data: bytes, command: DeviceCommand):
     output.write(json.dumps(log_entry) + '\n')
 
 
-def log_invalid(output: TextIOWrapper, err: InvalidRequestError, command: DeviceCommand):
+def log_invalid(output: TextIOWrapper, err: Exception, command: DeviceCommand):
     log_entry = {
         'type': 'client',
         'time': time.strftime('%Y-%m-%d %H:%M:%S %z', time.localtime()),
@@ -41,13 +41,9 @@ async def log_command(client: BluetoothClient, device: BluettiDevice, command: D
             parsed = device.parse(command.page, command.offset, result[3:-2])
             print(parsed)
         log_packet(log_file, result, command)
-    except InvalidRequestError as err:
-        print('Got a "invalid request" error')
+    except (InvalidRequestError, ParseError, BadConnectionError) as err:
+        print(f'Got an error running command {command}: {err}')
         log_invalid(log_file, err, command)
-    except ParseError:
-        print('Got a parse exception...')
-    except BadConnectionError as err:
-        print(f'Needed to disconnect due to error: {err}')
 
 
 async def log(address: str, path: str):
@@ -75,7 +71,11 @@ async def log(address: str, path: str):
 
         # Poll device
         while True:
-            await log_command(client, device, QueryRangeCommand(0x00, 0x0A, 0x3C), log_file)
+            if device.type == 'EB3A':
+                await log_command(client, device, QueryRangeCommand(0x00, 0x0A, 0x35), log_file)
+            else:
+                await log_command(client, device, QueryRangeCommand(0x00, 0x00, 0x46), log_file)
+
             await log_command(client, device, QueryRangeCommand(0x0B, 0xB9, 0x3D), log_file)
 
             for pack in range(1, pack_max + 1):

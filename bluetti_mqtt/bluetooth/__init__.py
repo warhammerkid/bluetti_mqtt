@@ -54,7 +54,7 @@ class BluetoothClientHandler:
                 continue
 
             start_time = time.monotonic()
-            await self._poll_with_command(device, client, QueryRangeCommand(0x00, 0x0A, 0x3C))
+            await self._poll_with_command(device, client, QueryRangeCommand(0x00, 0x0A, 0x35))
             await self._poll_with_command(device, client, QueryRangeCommand(0x00, 0x46, 0x42))
             await self._poll_with_command(device, client, QueryRangeCommand(0x0B, 0xB9, 0x3D))
             elapsed = time.monotonic() - start_time
