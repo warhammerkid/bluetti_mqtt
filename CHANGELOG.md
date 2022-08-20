@@ -5,6 +5,7 @@
 * Add support for Home Assistant discovery (@lbossle)
 * Re-architect parsing to support device-specific customization
 * Add beta support for EB3A
+* Fix bug with automatic bluetooth reconnect
 
 ## 0.6.3
 

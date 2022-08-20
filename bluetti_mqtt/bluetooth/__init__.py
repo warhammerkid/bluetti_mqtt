@@ -3,7 +3,7 @@ import logging
 import re
 import time
 from typing import Dict, List, Set
-from bleak import BleakScanner
+from bleak import BleakError, BleakScanner
 from bleak.backends.device import BLEDevice
 from bluetti_mqtt.bus import CommandMessage, EventBus, ParserMessage
 from bluetti_mqtt.commands import QueryRangeCommand
@@ -71,7 +71,7 @@ class BluetoothClientHandler:
             await self.bus.put(ParserMessage(device, parsed))
         except ParseError:
             logging.debug('Got a parse exception...')
-        except BadConnectionError as err:
+        except (BadConnectionError, BleakError) as err:
             logging.debug(f'Needed to disconnect due to error: {err}')
 
 
