@@ -7,6 +7,7 @@ import json
 import re
 import textwrap
 import time
+import sys
 from bleak import BleakScanner
 from bluetti_mqtt.bluetooth import scan_devices
 from bluetti_mqtt.bluetooth.client import BluetoothClient
@@ -110,3 +111,6 @@ def main():
         asyncio.run(log(args.address, args.log))
     else:
         parser.print_help()
+
+if __name__ == "__main__":
+    main(sys.argv)

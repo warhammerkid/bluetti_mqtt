@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+* Add support for Home Assistant discovery (@lbossle)
+
 ## 0.6.3
 
 * Fix bug with scanning unnamed devices for WinRT bluetooth backend
