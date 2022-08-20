@@ -6,7 +6,7 @@ import signal
 from typing import Set
 import warnings
 import sys
-from bluetti_mqtt.bluetooth import BluetoothClientHandler, scan_devices
+from bluetti_mqtt.bluetooth import BluetoothClientHandler, check_addresses, scan_devices
 from bluetti_mqtt.bus import EventBus
 from bluetti_mqtt.mqtt_client import MQTTClient
 
@@ -71,12 +71,12 @@ class CommandLineHandler:
 
         # Verify that we can see all the given addresses
         addresses = set(args.addresses)
-        bluetooth_handler = BluetoothClientHandler(addresses, args.interval, bus)
-        devices = await bluetooth_handler.check()
+        devices = await check_addresses(addresses)
         if len(devices) == 0:
             sys.exit('Could not find the given devices to connect to')
 
         # Start bluetooth handler (manages connections)
+        bluetooth_handler = BluetoothClientHandler(devices, args.interval, bus)
         self.bluetooth_task = loop.create_task(bluetooth_handler.run())
 
         # Start MQTT client

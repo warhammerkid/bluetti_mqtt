@@ -3,13 +3,12 @@ from dataclasses import dataclass
 import logging
 from typing import Callable, List, Union
 from bluetti_mqtt.commands import DeviceCommand
-from bluetti_mqtt.device import BluettiDevice
-from bluetti_mqtt.parser import DataParser
+from bluetti_mqtt.devices import BluettiDevice
 
 @dataclass(frozen=True)
 class ParserMessage:
     device: BluettiDevice
-    parser: DataParser
+    parsed: dict
 
 @dataclass(frozen=True)
 class CommandMessage:
