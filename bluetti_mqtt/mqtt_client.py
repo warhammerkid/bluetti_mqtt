@@ -89,7 +89,7 @@ class MQTTClient:
             return
 
         cmd: DeviceCommand = None
-        if m[3] == 'ups_mode' or m[3] == 'auto_sleep_mode':
+        if m[3] == 'ups_mode' or m[3] == 'auto_sleep_mode' or m[3] == 'led_mode':
             value = mqtt_message.payload.decode('ascii')
             cmd = device.build_setter_command(m[3], value)
         elif m[3] == 'ac_output_on' or m[3] == 'dc_output_on' or m[3] == 'grid_charge_on' or m[3] == 'time_control_on':
@@ -362,4 +362,9 @@ class MQTTClient:
             await client.publish(
                 topic_prefix + 'auto_sleep_mode',
                 payload=msg.parsed['auto_sleep_mode'].name.encode()
+            )
+        if 'led_mode' in msg.parsed:
+            await client.publish(
+                topic_prefix + 'led_mode',
+                payload=msg.parsed['led_mode'].name.encode()
             )

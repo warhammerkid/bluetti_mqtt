@@ -4,20 +4,11 @@ from .struct import DeviceStruct
 
 
 @unique
-class OutputMode(Enum):
-    STOP = 0
-    INVERTER_OUTPUT = 1
-    BYPASS_OUTPUT_C = 2
-    BYPASS_OUTPUT_D = 3
-    LOAD_MATCHING = 4
-
-
-@unique
-class UpsMode(Enum):
-    CUSTOMIZED = 1
-    PV_PRIORITY = 2
-    STANDARD = 3
-    TIME_CONTROL = 4
+class LedMode(Enum):
+    LOW = 1
+    HIGH = 2
+    SOS = 3
+    OFF = 4
 
 
 class EB3A(BluettiDevice):
@@ -43,5 +34,6 @@ class EB3A(BluettiDevice):
         # Page 0x0B - Controls
         self.struct.add_bool_field('ac_output_on', 0x0B, 0xBF)
         self.struct.add_bool_field('dc_output_on', 0x0B, 0xC0)
+        self.struct.add_enum_field('led_mode', 0x0B, 0xDA, LedMode)
 
         super().__init__(address, 'EB3A', sn)
