@@ -31,6 +31,9 @@ class EB3A(BluettiDevice):
         self.struct.add_decimal_field('ac_input_voltage', 0x00, 0x4D, 1)
         self.struct.add_decimal_field('dc_input_voltage', 0x00, 0x56, 1)
 
+        # Page 0x00 - Battery Data
+        self.struct.add_uint_field('pack_num_max', 0x00, 0x5B)
+
         # Page 0x0B - Controls
         self.struct.add_bool_field('ac_output_on', 0x0B, 0xBF)
         self.struct.add_bool_field('dc_output_on', 0x0B, 0xC0)
