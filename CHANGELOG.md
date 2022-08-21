@@ -2,6 +2,10 @@
 
 ## FUTURE
 
+## 0.7.1
+
+* Fix crash with EB3A logging (@jretz)
+
 ## 0.7.0
 
 * Add support for Home Assistant discovery (@lbossle)
