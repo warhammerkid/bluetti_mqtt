@@ -1,4 +1,6 @@
 from enum import Enum, unique
+from typing import List
+from bluetti_mqtt.commands import QueryRangeCommand
 from .bluetti_device import BluettiDevice
 from .struct import DeviceStruct
 
@@ -63,3 +65,30 @@ class AC200M(BluettiDevice):
         self.struct.add_enum_field('auto_sleep_mode', 0x0B, 0xF5, AutoSleepMode)
 
         super().__init__(address, 'AC200M', sn)
+
+    @property
+    def pack_num_max(self):
+        return 3
+
+    @property
+    def polling_commands(self) -> List[QueryRangeCommand]:
+        return [
+            QueryRangeCommand(0x00, 0x0A, 0x28),
+            QueryRangeCommand(0x0B, 0xB9, 0x3D),
+        ]
+
+    @property
+    def pack_polling_commands(self) -> List[QueryRangeCommand]:
+        return [QueryRangeCommand(0x00, 0x5B, 0x25)]
+
+    @property
+    def logging_commands(self) -> List[QueryRangeCommand]:
+        return [
+            QueryRangeCommand(0x00, 0x00, 0x46),
+            QueryRangeCommand(0x00, 0x46, 0x15),
+            QueryRangeCommand(0x0B, 0xB9, 0x3D),
+        ]
+
+    @property
+    def pack_logging_commands(self) -> List[QueryRangeCommand]:
+        return [QueryRangeCommand(0x00, 0x5B, 0x77)]

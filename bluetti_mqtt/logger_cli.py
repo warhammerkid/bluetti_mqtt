@@ -63,27 +63,24 @@ async def log(address: str, path: str):
             await asyncio.sleep(1)
             continue
 
-        # Get pack max
-        result_future = await client.perform(QueryRangeCommand(0x00, 0x5B, 1))
-        result = await result_future
-        pack_max = device.parse(0x00, 0x5B, result[3:-2])['pack_num_max']
-        print(f'Device has a maximum of {pack_max} battery packs')
-
         # Poll device
         while True:
-            if device.type == 'EB3A':
-                await log_command(client, device, QueryRangeCommand(0x00, 0x0A, 0x35), log_file)
-            else:
-                await log_command(client, device, QueryRangeCommand(0x00, 0x00, 0x46), log_file)
+            for command in device.logging_commands:
+                await log_command(client, device, command, log_file)
 
-            await log_command(client, device, QueryRangeCommand(0x0B, 0xB9, 0x3D), log_file)
+            # Skip pack polling if not available
+            if len(device.pack_logging_commands) == 0:
+                continue
 
-            for pack in range(1, pack_max + 1):
-                if pack_max > 1:
-                    await log_command(client, device, UpdateFieldCommand(0x0B, 0xBE, pack), log_file)
+            for pack in range(1, device.pack_num_max + 1):
+                # Send pack set command if the device supports more than 1 pack
+                if device.pack_num_max > 1:
+                    command = device.build_setter_command('pack_num', pack)
+                    await log_command(client, device, command, log_file)
                     await asyncio.sleep(10) # We need to wait after switching packs for the data to be available
-                await log_command(client, device, QueryRangeCommand(0x00, 0x46, 0x42), log_file)
-                await log_command(client, device, QueryRangeCommand(0x00, 0x88, 0x4a), log_file)
+
+                for command in device.pack_logging_commands:
+                    await log_command(client, device, command, log_file)
 
 
 def main():
