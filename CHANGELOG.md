@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+* Fix build issue
+
 ## 0.8.0
 
 * Add support for reporting details for multiple battery packs
