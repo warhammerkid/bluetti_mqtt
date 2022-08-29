@@ -84,7 +84,7 @@ class DeviceHandler:
             await self.bus.put(ParserMessage(device, parsed))
         except ParseError:
             logging.debug('Got a parse exception...')
-        except InvalidRequestError:
+        except InvalidRequestError as err:
             logging.debug(f'Got an invalid request error for {command}: {err}')
         except (BadConnectionError, BleakError) as err:
             logging.debug(f'Needed to disconnect due to error: {err}')
