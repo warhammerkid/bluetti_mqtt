@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+## 0.8.0
+
 * Add support for reporting details for multiple battery packs
 * Re-architect internals for a better logical separation into layers (core, bluetooth, and the polling + MQTT app)
 
