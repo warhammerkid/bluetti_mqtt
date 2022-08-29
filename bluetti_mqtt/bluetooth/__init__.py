@@ -9,7 +9,7 @@ from bluetti_mqtt.bus import CommandMessage, EventBus, ParserMessage
 from bluetti_mqtt.commands import QueryRangeCommand
 from bluetti_mqtt.devices import BluettiDevice, AC200M, AC300, EP500, EP500P, EB3A
 from bluetti_mqtt.bluetooth.client import BluetoothClient
-from bluetti_mqtt.bluetooth.exc import BadConnectionError, ParseError
+from bluetti_mqtt.bluetooth.exc import BadConnectionError, InvalidRequestError, ParseError
 
 
 DEVICE_NAME_RE = re.compile(r'^(AC200M|AC300|EP500P|EP500|EB3A)(\d+)$')
@@ -38,7 +38,9 @@ class BluetoothClientHandler:
 
         # Poll the clients
         logging.info('Starting to poll clients...')
-        await asyncio.gather(*[self._poll(d, c) for d, c in self.clients.items()])
+        polling_tasks = [self._poll(d, c) for d, c in self.clients.items()]
+        pack_polling_tasks = [self._pack_poll(d, c) for d, c in self.clients.items() if len(d.pack_logging_commands) > 0]
+        await asyncio.gather(*(polling_tasks + pack_polling_tasks))
 
     async def handle_command(self, msg: CommandMessage):
         if msg.device in self.clients:
@@ -53,10 +55,34 @@ class BluetoothClientHandler:
                 await asyncio.sleep(1)
                 continue
 
+            # Send all polling commands
             start_time = time.monotonic()
-            await self._poll_with_command(device, client, QueryRangeCommand(0x00, 0x0A, 0x35))
-            await self._poll_with_command(device, client, QueryRangeCommand(0x00, 0x46, 0x42))
-            await self._poll_with_command(device, client, QueryRangeCommand(0x0B, 0xB9, 0x3D))
+            for command in device.polling_commands:
+                await self._poll_with_command(device, client, command)
+            elapsed = time.monotonic() - start_time
+
+            # Limit polling rate if interval provided
+            if self.interval > 0 and self.interval > elapsed:
+                await asyncio.sleep(self.interval - elapsed)
+
+    async def _pack_poll(self, device: BluettiDevice, client: BluetoothClient):
+        while True:
+            if not client.is_connected:
+                logging.debug(f'Waiting for connection to {device.address} to start pack polling...')
+                await asyncio.sleep(1)
+                continue
+
+            start_time = time.monotonic()
+            for pack in range(1, device.pack_num_max + 1):
+                # Send pack set command if the device supports more than 1 pack
+                if device.pack_num_max > 1:
+                    command = device.build_setter_command('pack_num', pack)
+                    await client.perform_nowait(command)
+                    await asyncio.sleep(10) # We need to wait after switching packs for the data to be available
+
+                # Poll
+                for command in device.pack_logging_commands:
+                    await self._poll_with_command(device, client, command)
             elapsed = time.monotonic() - start_time
 
             # Limit polling rate if interval provided
@@ -71,6 +97,8 @@ class BluetoothClientHandler:
             await self.bus.put(ParserMessage(device, parsed))
         except ParseError:
             logging.debug('Got a parse exception...')
+        except InvalidRequestError:
+            logging.debug(f'Got an invalid request error for {command}: {err}')
         except (BadConnectionError, BleakError) as err:
             logging.debug(f'Needed to disconnect due to error: {err}')
 

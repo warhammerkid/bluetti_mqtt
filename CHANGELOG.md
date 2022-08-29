@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+* Add support for reporting details for multiple battery packs
+
 ## 0.7.1
 
 * Fix crash with EB3A logging (@jretz)
