@@ -1,16 +1,20 @@
 import argparse
 import asyncio
 import base64
+from bleak import BleakError
 from io import TextIOWrapper
 import json
 import sys
 import textwrap
 import time
-from bluetti_mqtt.bluetooth import check_addresses, scan_devices
-from bluetti_mqtt.bluetooth.client import BluetoothClient
-from bluetti_mqtt.bluetooth.exc import InvalidRequestError, ParseError, BadConnectionError
-from bluetti_mqtt.commands import QueryRangeCommand, UpdateFieldCommand, DeviceCommand
-from bluetti_mqtt.devices import BluettiDevice
+from typing import cast
+from bluetti_mqtt.bluetooth import (
+    check_addresses, scan_devices, BluetoothClient, InvalidRequestError,
+    ParseError, BadConnectionError
+)
+from bluetti_mqtt.core import (
+    BluettiDevice, CommandResponse, QueryRangeCommand, DeviceCommand
+)
 
 
 def log_packet(output: TextIOWrapper, data: bytes, command: DeviceCommand):
@@ -34,14 +38,14 @@ def log_invalid(output: TextIOWrapper, err: Exception, command: DeviceCommand):
 
 
 async def log_command(client: BluetoothClient, device: BluettiDevice, command: DeviceCommand, log_file: TextIOWrapper):
-    result_future = await client.perform(command)
+    response_future = await client.perform(command)
     try:
-        result = await result_future
+        response = cast(CommandResponse, await response_future)
         if isinstance(command, QueryRangeCommand):
-            parsed = device.parse(command.page, command.offset, result[3:-2])
+            parsed = device.parse(command.page, command.offset, response.body)
             print(parsed)
-        log_packet(log_file, result, command)
-    except (InvalidRequestError, ParseError, BadConnectionError) as err:
+        log_packet(log_file, response.data, command)
+    except (BadConnectionError, BleakError, InvalidRequestError, ParseError) as err:
         print(f'Got an error running command {command}: {err}')
         log_invalid(log_file, err, command)
 

@@ -6,8 +6,7 @@ from typing import List, Optional
 from asyncio_mqtt import Client, MqttError
 from paho.mqtt.client import MQTTMessage
 from bluetti_mqtt.bus import CommandMessage, EventBus, ParserMessage
-from bluetti_mqtt.commands import DeviceCommand
-from bluetti_mqtt.devices import BluettiDevice
+from bluetti_mqtt.core import BluettiDevice, DeviceCommand
 
 
 COMMAND_TOPIC_RE = re.compile(r'^bluetti/command/(\w+)-(\d+)/([a-z_]+)$')
