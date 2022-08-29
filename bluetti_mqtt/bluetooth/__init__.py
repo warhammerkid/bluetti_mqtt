@@ -9,7 +9,7 @@ from bluetti_mqtt.bus import CommandMessage, EventBus, ParserMessage
 from bluetti_mqtt.commands import QueryRangeCommand
 from bluetti_mqtt.devices import BluettiDevice, AC200M, AC300, EP500, EP500P, EB3A
 from bluetti_mqtt.bluetooth.client import BluetoothClient
-from bluetti_mqtt.bluetooth.exc import BadConnectionError, ParseError
+from bluetti_mqtt.bluetooth.exc import BadConnectionError, InvalidRequestError, ParseError
 
 
 DEVICE_NAME_RE = re.compile(r'^(AC200M|AC300|EP500P|EP500|EB3A)(\d+)$')
@@ -97,6 +97,8 @@ class BluetoothClientHandler:
             await self.bus.put(ParserMessage(device, parsed))
         except ParseError:
             logging.debug('Got a parse exception...')
+        except InvalidRequestError:
+            logging.debug(f'Got an invalid request error for {command}: {err}')
         except (BadConnectionError, BleakError) as err:
             logging.debug(f'Needed to disconnect due to error: {err}')
 
