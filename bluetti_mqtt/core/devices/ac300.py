@@ -96,6 +96,7 @@ class AC300(BluettiDevice):
     def polling_commands(self) -> List[QueryRangeCommand]:
         return [
             QueryRangeCommand(0x00, 0x0A, 0x28),
+            QueryRangeCommand(0x00, 0x46, 0x15),
             QueryRangeCommand(0x0B, 0xB9, 0x3D),
         ]
 
