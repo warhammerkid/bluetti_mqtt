@@ -1,8 +1,7 @@
 import asyncio
 from bleak import BleakClient, BleakError
-from bluetti_mqtt.utils import modbus_crc
-from bluetti_mqtt.commands import DeviceCommand
-from bluetti_mqtt.bluetooth.exc import BadConnectionError, InvalidRequestError, ParseError
+from bluetti_mqtt.core import CommandResponse, DeviceCommand
+from .exc import BadConnectionError, InvalidRequestError, ParseError
 
 
 class BluetoothClient:
@@ -12,7 +11,7 @@ class BluetoothClient:
 
     current_command: DeviceCommand
     notify_future: asyncio.Future
-    notify_data: bytearray
+    notify_response: CommandResponse
 
     def __init__(self, address: str):
         self.address = address
@@ -59,7 +58,7 @@ class BluetoothClient:
                     # Prepare to make request
                     self.current_command = cmd
                     self.notify_future = self.loop.create_future()
-                    self.notify_data = bytearray()
+                    self.notify_response = CommandResponse(bytearray())
 
                     # Make request
                     await client.write_gatt_char(
@@ -115,17 +114,14 @@ class BluetoothClient:
             return
 
         # Save data
-        self.notify_data.extend(data)
+        self.notify_response.extend(data)
 
-        if len(self.notify_data) == self.current_command.response_size():
-            # We got the data we were expecting - validate the CRC
-            crc = modbus_crc(self.notify_data[0:-2])
-            crc_bytes = crc.to_bytes(2, byteorder='little')
-            if self.notify_data[-2:] == crc_bytes:
-                self.notify_future.set_result(self.notify_data)
+        if len(self.notify_response) == self.current_command.response_size():
+            if self.notify_response.is_valid():
+                self.notify_future.set_result(self.notify_response)
             else:
                 self.notify_future.set_exception(ParseError('Failed checksum'))
-        elif len(self.notify_data) == 5 and self.notify_data[1] == 0x83:
+        elif self.notify_response.is_invalid_error():
             # We got an invalid request error response
-            msg = f'Error {self.notify_data[2]}'
+            msg = f'Error {self.notify_response.data[2]}'
             self.notify_future.set_exception(InvalidRequestError(msg))

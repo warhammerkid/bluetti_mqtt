@@ -3,11 +3,11 @@ import asyncio
 import logging
 import os
 import signal
-from typing import Set
 import warnings
 import sys
-from bluetti_mqtt.bluetooth import BluetoothClientHandler, check_addresses, scan_devices
+from bluetti_mqtt.bluetooth import check_addresses, scan_devices
 from bluetti_mqtt.bus import EventBus
+from bluetti_mqtt.device_handler import DeviceHandler
 from bluetti_mqtt.mqtt_client import MQTTClient
 
 
@@ -76,8 +76,8 @@ class CommandLineHandler:
             sys.exit('Could not find the given devices to connect to')
 
         # Start bluetooth handler (manages connections)
-        bluetooth_handler = BluetoothClientHandler(devices, args.interval, bus)
-        self.bluetooth_task = loop.create_task(bluetooth_handler.run())
+        handler = DeviceHandler(devices, args.interval, bus)
+        self.bluetooth_task = loop.create_task(handler.run())
 
         # Start MQTT client
         mqtt_client = MQTTClient(

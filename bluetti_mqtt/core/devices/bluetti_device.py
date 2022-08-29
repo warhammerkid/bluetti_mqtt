@@ -1,5 +1,5 @@
 from typing import Any, List
-from bluetti_mqtt.commands import QueryRangeCommand, UpdateFieldCommand
+from ..commands import QueryRangeCommand, UpdateFieldCommand
 from .struct import BoolField, DeviceStruct, EnumField
 
 

@@ -1,6 +1,6 @@
 from enum import Enum, unique
 from typing import List
-from bluetti_mqtt.commands import QueryRangeCommand
+from ..commands import QueryRangeCommand
 from .bluetti_device import BluettiDevice
 from .struct import DeviceStruct
 
