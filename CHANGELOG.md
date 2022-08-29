@@ -2,6 +2,10 @@
 
 ## FUTURE
 
+## 0.8.2
+
+* More bug fixes...
+
 ## 0.8.1
 
 * Fix build issue
