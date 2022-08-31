@@ -45,6 +45,35 @@ not set an interval.
 
     $ bluetti-mqtt --broker [MQTT_BROKER_HOST] 00:11:22:33:44:55 00:11:22:33:44:66
 
+Background Service
+------------------
+
+If you are running on a platform with systemd, you can use the following as a
+template. It should be placed in `/etc/systemd/system/bluetti-mqtt.service`.
+Once you've written the file, you'll need to run
+`sudo systemctl start bluetti-mqtt`. If you want it to run automatically after
+rebooting, you'll also need to run `sudo systemctl enable bluetti-mqtt`.
+
+.. code-block:: bash
+
+    [Unit]
+    Description=Bluetti MQTT
+    After=network.target
+    StartLimitIntervalSec=0
+
+    [Service]
+    Type=simple
+    Restart=always
+    RestartSec=30
+    TimeoutStopSec=15
+    User=your_username_here
+    ExecStart=/home/your_username_here/.local/bin/bluetti-mqtt [MQTT_BROKER_HOST] 00:11:22:33:44:55
+
+    [Install]
+    WantedBy=multi-user.target
+
+
+
 Home Assistant Integration
 --------------------------
 
