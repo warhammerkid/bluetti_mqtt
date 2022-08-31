@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+* Fix a bug with `dc_input_power` reporting
+
 ## 0.8.2
 
 * More bug fixes...
