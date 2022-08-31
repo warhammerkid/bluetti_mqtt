@@ -308,20 +308,20 @@ class MQTTClient:
                 topic_prefix + 'ac_input_frequency',
                 payload=str(msg.parsed['ac_input_frequency']).encode()
             )
-        if 'dc_input_voltage' in msg.parsed:
+        if 'internal_dc_input_voltage' in msg.parsed:
             await client.publish(
                 topic_prefix + 'dc_input_voltage1',
-                payload=str(msg.parsed['dc_input_voltage']).encode()
+                payload=str(msg.parsed['internal_dc_input_voltage']).encode()
             )
-        if 'dc_input_power' in msg.parsed:
+        if 'internal_dc_input_power' in msg.parsed:
             await client.publish(
                 topic_prefix + 'dc_input_power1',
-                payload=str(msg.parsed['dc_input_power']).encode()
+                payload=str(msg.parsed['internal_dc_input_power']).encode()
             )
-        if 'dc_input_current' in msg.parsed:
+        if 'internal_dc_input_current' in msg.parsed:
             await client.publish(
                 topic_prefix + 'dc_input_current1',
-                payload=str(msg.parsed['dc_input_current']).encode()
+                payload=str(msg.parsed['internal_dc_input_current']).encode()
             )
         if 'pack_battery_percent' in msg.parsed:
             pack_details = {

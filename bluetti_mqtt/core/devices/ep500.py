@@ -60,9 +60,9 @@ class EP500(BluettiDevice):
         self.struct.add_decimal_field('internal_current_three', 0x00, 0x4E, 1)
         self.struct.add_uint_field('internal_power_three', 0x00, 0x4F)
         self.struct.add_decimal_field('ac_input_frequency', 0x00, 0x50, 2)
-        self.struct.add_decimal_field('dc_input_voltage', 0x00, 0x56, 1)
-        self.struct.add_uint_field('dc_input_power', 0x00, 0x57)
-        self.struct.add_decimal_field('dc_input_current', 0x00, 0x58, 1)
+        self.struct.add_decimal_field('internal_dc_input_voltage', 0x00, 0x56, 1)
+        self.struct.add_uint_field('internal_dc_input_power', 0x00, 0x57)
+        self.struct.add_decimal_field('internal_dc_input_current', 0x00, 0x58, 1)
 
         # Page 0x00 - Battery Data
         self.struct.add_uint_field('pack_num_max', 0x00, 0x5B)
