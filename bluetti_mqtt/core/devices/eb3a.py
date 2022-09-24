@@ -50,7 +50,7 @@ class EB3A(BluettiDevice):
         return [
             QueryRangeCommand(0x00, 0x0A, 0x28),
             QueryRangeCommand(0x00, 0x46, 0x15),
-            QueryRangeCommand(0x0B, 0xB9, 0x1C)
+            QueryRangeCommand(0x0B, 0xB9, 0x3D)
         ]
 
     @property
