@@ -5,48 +5,64 @@ import json
 import logging
 import re
 from typing import List, Optional
+from dataclasses import dataclass
+from datetime import datetime
 from asyncio_mqtt import Client, MqttError
 from paho.mqtt.client import MQTTMessage
 from bluetti_mqtt.bus import CommandMessage, EventBus, ParserMessage
 from bluetti_mqtt.core import BluettiDevice, DeviceCommand
 
-
 COMMAND_TOPIC_RE = re.compile(r'^bluetti/command/(\w+)-(\d+)/([a-z_]+)$')
+SECONDS_PER_HOUR = 3600
+MICROSECONDS_PER_SECOND = 1000000
 
 
 class MQTTClient:
     message_queue: asyncio.Queue
     value_cache = {}
+    calculated_energy = {}
 
-    messageParsers = {'ac_input_power': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'dc_input_power': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'ac_output_power': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'dc_output_power': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'total_battery_percent': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'ac_output_on': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'dc_output_on': lambda key, msg: str('ON' if msg.parsed[key] else 'OFF').encode(),
-                      'ac_output_mode': lambda key, msg: msg.parsed[key].name.encode(),
-                      'internal_ac_voltage': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'internal_current_one': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'internal_power_one': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'internal_ac_frequency': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'internal_current_two': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'internal_power_two': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'ac_input_voltage': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'internal_current_three': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'internal_power_three': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'ac_input_frequency': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'internal_dc_input_voltage': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'internal_dc_input_power': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'internal_dc_input_current': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'ups_mode': lambda key, msg: str(msg.parsed[key].name.encode()),
-                      'grid_charge_on': lambda key, msg: str('ON' if msg.parsed[key] else 'OFF').encode(),
-                      'time_control_on': lambda key, msg: str('ON' if msg.parsed[key] else 'OFF').encode(),
-                      'battery_range_start': lambda key, msg: str(msg.parsed[key]).encode(),
-                      'battery_range_end': lambda key, msg:  str(msg.parsed[key]).encode(),
-                      'auto_sleep_mode': lambda key, msg: msg.parsed[key].name.encode(),
-                      'led_mode': lambda key, msg: msg.parsed[key].name.encode()
-                      }
+    @dataclass
+    class EnergyEntry:
+        ''' Keep track of consumed/provided energy '''
+        last_value = 0
+        watt_seconds_total: int = 0
+        last_value_ts = datetime.now()
+
+    message_parsers = {'ac_input_power': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'dc_input_power': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'ac_output_power': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'dc_output_power': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'total_battery_percent': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'ac_output_on': lambda key, msg: str('ON' if msg.parsed[key] else 'OFF').encode(),
+                       'dc_output_on': lambda key, msg: str('ON' if msg.parsed[key] else 'OFF').encode(),
+                       'ac_output_mode': lambda key, msg: msg.parsed[key].name.encode(),
+                       'internal_ac_voltage': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'internal_current_one': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'internal_power_one': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'internal_ac_frequency': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'internal_current_two': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'internal_power_two': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'ac_input_voltage': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'internal_current_three': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'internal_power_three': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'ac_input_frequency': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'internal_dc_input_voltage': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'internal_dc_input_power': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'internal_dc_input_current': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'ups_mode': lambda key, msg: str(msg.parsed[key].name.encode()),
+                       'grid_charge_on': lambda key, msg: str('ON' if msg.parsed[key] else 'OFF').encode(),
+                       'time_control_on': lambda key, msg: str('ON' if msg.parsed[key] else 'OFF').encode(),
+                       'battery_range_start': lambda key, msg: str(msg.parsed[key]).encode(),
+                       'battery_range_end': lambda key, msg:  str(msg.parsed[key]).encode(),
+                       'auto_sleep_mode': lambda key, msg: msg.parsed[key].name.encode(),
+                       'led_mode': lambda key, msg: msg.parsed[key].name.encode()
+                       }
+    energy_counters = {'ac_input_power': 'ac_input_energy',
+                       'dc_input_power': 'dc_input_energy',
+                       'ac_output_power': 'ac_output_energy',
+                       'dc_output_power': 'dc_output_energy'
+                       }
 
     def __init__(
         self,
@@ -175,6 +191,19 @@ class MQTTClient:
                                  retain=True
                                  )
 
+            await client.publish(f'homeassistant/sensor/{d.sn}_ac_input_energy/config',
+                                 payload=payload(
+                                     id='ac_input_energy',
+                                     device=d,
+                                     name='AC Input Energy',
+                                     unit_of_measurement='Wh',
+                                     device_class='energy',
+                                     state_class="total_increasing",
+                                     force_update=True)
+                                 .encode(),
+                                 retain=True
+                                 )
+
             await client.publish(f'homeassistant/sensor/{d.sn}_dc_input_power/config',
                                  payload=payload(
                                      id='dc_input_power',
@@ -183,6 +212,19 @@ class MQTTClient:
                                      unit_of_measurement='W',
                                      device_class='power',
                                      state_class='measurement',
+                                     force_update=True)
+                                 .encode(),
+                                 retain=True
+                                 )
+
+            await client.publish(f'homeassistant/sensor/{d.sn}_dc_input_energy/config',
+                                 payload=payload(
+                                     id='dc_input_energy',
+                                     device=d,
+                                     name='DC Input Energy',
+                                     unit_of_measurement='Wh',
+                                     device_class='energy',
+                                     state_class="total_increasing",
                                      force_update=True)
                                  .encode(),
                                  retain=True
@@ -201,6 +243,19 @@ class MQTTClient:
                                  retain=True
                                  )
 
+            await client.publish(f'homeassistant/sensor/{d.sn}_ac_output_energy/config',
+                                 payload=payload(
+                                     id='ac_output_energy',
+                                     device=d,
+                                     name='AC Output Energy',
+                                     unit_of_measurement='Wh',
+                                     device_class='energy',
+                                     state_class="total_increasing",
+                                     force_update=True)
+                                 .encode(),
+                                 retain=True
+                                 )
+
             await client.publish(f'homeassistant/sensor/{d.sn}_dc_output_power/config',
                                  payload=payload(
                                      id='dc_output_power',
@@ -209,6 +264,18 @@ class MQTTClient:
                                      unit_of_measurement='W',
                                      device_class='power',
                                      state_class='measurement',
+                                     force_update=True)
+                                 .encode(),
+                                 retain=True
+                                 )
+            await client.publish(f'homeassistant/sensor/{d.sn}_dc_output_energy/config',
+                                 payload=payload(
+                                     id='dc_output_energy',
+                                     device=d,
+                                     name='DC Output Energy',
+                                     unit_of_measurement='Wh',
+                                     device_class='energy',
+                                     state_class="total_increasing",
                                      force_update=True)
                                  .encode(),
                                  retain=True
@@ -246,6 +313,32 @@ class MQTTClient:
                                  retain=True
                                  )
 
+            await client.publish(f'homeassistant/sensor/{d.sn}_total_input_energy/config',
+                                 payload=payload(
+                                     id='total_input_energy',
+                                     device=d,
+                                     name='Total Input Energy',
+                                     unit_of_measurement='Wh',
+                                     device_class='energy',
+                                     state_class="total_increasing",
+                                     force_update=True)
+                                 .encode(),
+                                 retain=True
+                                 )
+
+            await client.publish(f'homeassistant/sensor/{d.sn}_total_output_energy/config',
+                                 payload=payload(
+                                     id='total_output_energy',
+                                     device=d,
+                                     name='Total Output Energy',
+                                     unit_of_measurement='Wh',
+                                     device_class='energy',
+                                     state_class="total_increasing",
+                                     force_update=True)
+                                 .encode(),
+                                 retain=True
+                                 )
+
             logging.info(
                 f'Sent discovery message of {d.type}-{d.sn} to Home Assistant')
 
@@ -261,17 +354,44 @@ class MQTTClient:
     async def _handle_message(self, client: Client, msg: ParserMessage):
         topic_prefix = f'bluetti/state/{msg.device.type}-{msg.device.sn}/'
         logging.debug(f'Got a message from {msg.device}: {msg.parsed}')
+        now = datetime.now()
+
+        for power, energy in self.energy_counters.items():
+            if power in msg.parsed:
+                await self._update_energy(client, now, topic_prefix, energy, msg.parsed[power])
 
         if 'pack_battery_percent' in msg.parsed:
             pack_details = {
                 'percent': msg.parsed['pack_battery_percent'],
                 'voltages': [float(d) for d in msg.parsed['cell_voltages']],
             }
-            packKey = f'pack_details{msg.parsed["pack_num"]}'
-            self._update_value(client, topic_prefix + packKey, packKey,
-                               json.dumps(pack_details, separators=(',', ':')).encode())
+            pack_key = f'pack_details{msg.parsed["pack_num"]}'
+            await self._update_value(client, topic_prefix + pack_key, pack_key,
+                                     json.dumps(pack_details, separators=(',', ':')).encode())
 
-        for key, formatLambda in self.messageParsers.items():
+        for key, format_lambda in self.message_parsers.items():
             if key in msg.parsed:
                 # logging.info(f'calling _update_value for: {key}')
-                await self._update_value(client, topic_prefix + key, key, formatLambda(key, msg))
+                await self._update_value(client, topic_prefix + key, key, format_lambda(key, msg))
+
+    async def _update_energy(self, client, now, topic_prefix,  energy_key, current_value):
+        if current_value != 0:
+            state = self.calculated_energy.setdefault(
+                energy_key, self.EnergyEntry())
+            state.watt_seconds_total += (now - state.last_value_ts).microseconds * (
+                (state.last_value + current_value) / 2) / MICROSECONDS_PER_SECOND
+            state.last_value_ts = now
+            state.last_value = current_value
+            await self._update_value(client, topic_prefix + energy_key, energy_key, round(state.watt_seconds_total / SECONDS_PER_HOUR, 2))
+
+            total_in = self.calculated_energy.get(
+                'ac_input_energy', self.EnergyEntry()).watt_seconds_total
+            total_in += self.calculated_energy.get(
+                'dc_input_energy', self.EnergyEntry()).watt_seconds_total
+            await self._update_value(client, topic_prefix + 'total_input_energy', 'total_input_energy', round(total_in / SECONDS_PER_HOUR, 2))
+
+            total_out = self.calculated_energy.get(
+                'ac_output_energy', self.EnergyEntry()).watt_seconds_total
+            total_out += self.calculated_energy.get(
+                'dc_output_energy', self.EnergyEntry()).watt_seconds_total
+            await self._update_value(client, topic_prefix + 'total_output_energy', 'total_output_energy', round(total_out / SECONDS_PER_HOUR, 2))
