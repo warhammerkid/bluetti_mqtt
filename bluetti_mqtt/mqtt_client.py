@@ -210,7 +210,18 @@ class MQTTClient:
                             .encode(),
                         retain=True
                         )
-
+            await client.publish(f'homeassistant/select/{d.sn}_led_mode/config',
+                        payload=payload(
+                            id='led_mode',
+                            device=d,
+                            name='LED Mode',
+                            icon='mdi:lightbulb',
+                            value_template= r'{{ value_json.power_on_behavior }}',
+                            options= [ 'LOW', 'HIGH', 'SOS', 'OFF' ],
+                            force_update=True)
+                        .encode(),
+                        retain=True
+                        )
             logging.info(f'Sent discovery message of {d.type}-{d.sn} to Home Assistant')
 
 
