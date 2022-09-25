@@ -22,6 +22,7 @@ class MQTTClient:
                       'dc_input_power': lambda key, msg: str(msg.parsed[key]).encode(),
                       'ac_output_power': lambda key, msg: str(msg.parsed[key]).encode(),
                       'dc_output_power': lambda key, msg: str(msg.parsed[key]).encode(),
+                      'total_battery_percent': lambda key, msg: str(msg.parsed[key]).encode(),
                       'ac_output_on': lambda key, msg: str(msg.parsed[key]).encode(),
                       'dc_output_on': lambda key, msg: str('ON' if msg.parsed[key] else 'OFF').encode(),
                       'ac_output_mode': lambda key, msg: msg.parsed[key].name.encode(),
