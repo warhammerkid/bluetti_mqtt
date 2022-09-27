@@ -2,7 +2,7 @@
 
 ## FUTURE
 
-* Add LED status and setting to homeassistant for EB3A
+* Add LED status and setting to homeassistant for EB3A (@ray0711)
 
 ## 0.8.3
 
