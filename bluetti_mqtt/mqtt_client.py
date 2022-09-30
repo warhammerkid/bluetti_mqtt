@@ -14,8 +14,6 @@ from bluetti_mqtt.core import BluettiDevice, DeviceCommand
 
 COMMAND_TOPIC_RE = re.compile(r'^bluetti/command/(\w+)-(\d+)/([a-z_]+)$')
 SECONDS_PER_HOUR = 3600
-MICROSECONDS_PER_SECOND = 1000000
-
 
 class MQTTClient:
     message_queue: asyncio.Queue
@@ -376,10 +374,9 @@ class MQTTClient:
 
     async def _update_energy(self, client, now, topic_prefix,  energy_key, current_value):
         if current_value != 0:
-            state = self.calculated_energy.setdefault(
-                energy_key, self.EnergyEntry())
-            state.watt_seconds_total += (now - state.last_value_ts).microseconds * (
-                (state.last_value + current_value) / 2) / MICROSECONDS_PER_SECOND
+            state = self.calculated_energy.setdefault(energy_key, self.EnergyEntry())
+            state.watt_seconds_total += (now - state.last_value_ts).total_seconds() * ((state.last_value + current_value) / 2)
+
             state.last_value_ts = now
             state.last_value = current_value
             await self._update_value(client, topic_prefix + energy_key, energy_key, round(state.watt_seconds_total / SECONDS_PER_HOUR, 2))
