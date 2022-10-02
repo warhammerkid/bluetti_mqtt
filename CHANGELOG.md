@@ -4,6 +4,7 @@
 
 * Add LED status and setting to homeassistant for EB3A (@ray0711)
 * Fix crash with failed bluetooth connection
+* Add beta support for AC500
 
 ## 0.8.3
 
