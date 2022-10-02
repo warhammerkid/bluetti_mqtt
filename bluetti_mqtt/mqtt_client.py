@@ -217,7 +217,6 @@ class MQTTClient:
                                 device=d,
                                 name='LED Mode',
                                 icon='mdi:lightbulb',
-                                value_template= r'{{ value_json.power_on_behavior }}',
                                 options= [ 'LOW', 'HIGH', 'SOS', 'OFF' ],
                                 force_update=True)
                             .encode(),
