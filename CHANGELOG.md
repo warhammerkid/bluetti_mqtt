@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+* Add LED status and setting to homeassistant for EB3A (@ray0711)
+
 ## 0.8.3
 
 * Fix a bug with `dc_input_power` reporting
