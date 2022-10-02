@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from bleak import BleakClient, BleakError
 from bluetti_mqtt.core import CommandResponse, DeviceCommand
 from .exc import BadConnectionError, InvalidRequestError, ParseError
@@ -34,17 +35,25 @@ class BluetoothClient:
 
     async def run(self):
         while True:
+            # Try to connect
             try:
                 await self.client.connect()
+            except BaseException as err:
+                logging.error(f'Error connecting to device: {err}')
+                await asyncio.sleep(1)
+                continue
+
+            # Register for notifications and run command loop
+            try:
                 await self.client.start_notify(
                     self.NOTIFY_UUID,
                     self._notification_handler)
                 await self._perform_commands(self.client)
-            except (BleakError, asyncio.TimeoutError):
+            except (BleakError, asyncio.TimeoutError) as err:
+                logging.error('Reconnecting after error: {err}')
                 continue
-            except BadConnectionError:
-                # Something went wrong somewhere
-                await self.client.disconnect()
+            except BadConnectionError as err:
+                logging.error(f'Delayed reconnect after error: {err}')
                 await asyncio.sleep(1)
             finally:
                 await self.client.disconnect()
