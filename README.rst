@@ -67,7 +67,7 @@ rebooting, you'll also need to run `sudo systemctl enable bluetti-mqtt`.
     RestartSec=30
     TimeoutStopSec=15
     User=your_username_here
-    ExecStart=/home/your_username_here/.local/bin/bluetti-mqtt [MQTT_BROKER_HOST] 00:11:22:33:44:55
+    ExecStart=/home/your_username_here/.local/bin/bluetti-mqtt --broker [MQTT_BROKER_HOST] 00:11:22:33:44:55
 
     [Install]
     WantedBy=multi-user.target
