@@ -46,9 +46,9 @@ class AC200M(BluettiDevice):
         self.struct.add_decimal_field('internal_current_one', 0x00, 0x48, 1)
         self.struct.add_uint_field('internal_power_one', 0x00, 0x49)
         self.struct.add_decimal_field('internal_ac_frequency', 0x00, 0x4A, 1)
-        self.struct.add_decimal_field('internal_dc_input_voltage', 0x00, 0x56, 1)
-        self.struct.add_uint_field('internal_dc_input_power', 0x00, 0x57)
-        self.struct.add_decimal_field('internal_dc_input_current', 0x00, 0x58, 1)
+        self.struct.add_uint_field('internal_dc_input_voltage', 0x00, 0x56)
+        self.struct.add_decimal_field('internal_dc_input_power', 0x00, 0x57, 1)
+        self.struct.add_decimal_field('internal_dc_input_current', 0x00, 0x58, 2)
 
         # Page 0x00 - Battery Data
         self.struct.add_uint_field('pack_num_max', 0x00, 0x5B)
