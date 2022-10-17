@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+* Fix decimal conversion factors for DC inputs on the AC200Max
+
 ## 0.9.0
 
 * Add LED status and setting to homeassistant for EB3A (@ray0711)
