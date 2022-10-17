@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+## 0.9.1
+
 * Fix decimal conversion factors for DC inputs on the AC200Max
 
 ## 0.9.0
