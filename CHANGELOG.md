@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+* Update EB3A support
+
 ## 0.9.1
 
 * Fix decimal conversion factors for DC inputs on the AC200Max

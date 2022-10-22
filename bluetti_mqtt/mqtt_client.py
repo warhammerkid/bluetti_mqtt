@@ -10,6 +10,22 @@ from bluetti_mqtt.core import BluettiDevice, DeviceCommand
 
 
 COMMAND_TOPIC_RE = re.compile(r'^bluetti/command/(\w+)-(\d+)/([a-z_]+)$')
+ENUM_SETTER_FIELDS = {
+    'ups_mode',
+    'auto_sleep_mode',
+    'led_mode',
+    'eco_shutdown',
+    'charging_mode'
+}
+BOOL_SETTER_FIELDS = {
+    'ac_output_on',
+    'dc_output_on',
+    'grid_charge_on',
+    'time_control_on',
+    'power_off',
+    'eco_on',
+    'power_lifting_on'
+}
 
 
 class MQTTClient:
@@ -84,14 +100,14 @@ class MQTTClient:
 
         # Check if the device supports setting this field
         if not device.has_field_setter(m[3]):
-            logging.warn(f'Recevied command for unknown topic: {m[3]} - {mqtt_message.topic}')
+            logging.warn(f'Received command for unknown topic: {m[3]} - {mqtt_message.topic}')
             return
 
         cmd: DeviceCommand = None
-        if m[3] == 'ups_mode' or m[3] == 'auto_sleep_mode' or m[3] == 'led_mode':
+        if m[3] in ENUM_SETTER_FIELDS:
             value = mqtt_message.payload.decode('ascii')
             cmd = device.build_setter_command(m[3], value)
-        elif m[3] == 'ac_output_on' or m[3] == 'dc_output_on' or m[3] == 'grid_charge_on' or m[3] == 'time_control_on':
+        elif m[3] in BOOL_SETTER_FIELDS:
             value = mqtt_message.payload == b'ON'
             cmd = device.build_setter_command(m[3], value)
         else:
@@ -377,4 +393,24 @@ class MQTTClient:
             await client.publish(
                 topic_prefix + 'led_mode',
                 payload=msg.parsed['led_mode'].name.encode()
+            )
+        if 'eco_on' in msg.parsed:
+            await client.publish(
+                topic_prefix + 'eco_on',
+                payload=('ON' if msg.parsed['eco_on'] else 'OFF').encode()
+            )
+        if 'eco_shutdown' in msg.parsed:
+            await client.publish(
+                topic_prefix + 'eco_shutdown',
+                payload=msg.parsed['eco_shutdown'].name.encode()
+            )
+        if 'charging_mode' in msg.parsed:
+            await client.publish(
+                topic_prefix + 'charging_mode',
+                payload=msg.parsed['charging_mode'].name.encode()
+            )
+        if 'power_lifting_on' in msg.parsed:
+            await client.publish(
+                topic_prefix + 'power_lifting_on',
+                payload=('ON' if msg.parsed['power_lifting_on'] else 'OFF').encode()
             )
