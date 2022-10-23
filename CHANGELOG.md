@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+## 0.9.2
+
 * Update EB3A support
 
 ## 0.9.1
