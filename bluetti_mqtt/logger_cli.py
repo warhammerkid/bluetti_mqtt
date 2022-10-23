@@ -81,7 +81,7 @@ async def log(address: str, path: str):
                 if device.pack_num_max > 1:
                     command = device.build_setter_command('pack_num', pack)
                     await log_command(client, device, command, log_file)
-                    await asyncio.sleep(10) # We need to wait after switching packs for the data to be available
+                    await asyncio.sleep(10)  # We need to wait after switching packs for the data to be available
 
                 for command in device.pack_logging_commands:
                     await log_command(client, device, command, log_file)
@@ -118,6 +118,7 @@ def main():
         asyncio.run(log(args.address, args.log))
     else:
         parser.print_help()
+
 
 if __name__ == "__main__":
     main(sys.argv)

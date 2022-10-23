@@ -4,15 +4,18 @@ import logging
 from typing import Callable, List, Union
 from bluetti_mqtt.core import BluettiDevice, DeviceCommand
 
+
 @dataclass(frozen=True)
 class ParserMessage:
     device: BluettiDevice
     parsed: dict
 
+
 @dataclass(frozen=True)
 class CommandMessage:
     device: BluettiDevice
     command: DeviceCommand
+
 
 class EventBus:
     parser_listeners: List[Callable[[ParserMessage], None]]
@@ -45,7 +48,7 @@ class EventBus:
             msg = await self.queue.get()
             logging.debug(f'queue size: {self.queue.qsize()}')
             if isinstance(msg, ParserMessage):
-                await asyncio.gather(*[l(msg) for l in self.parser_listeners])
+                await asyncio.gather(*[pl(msg) for pl in self.parser_listeners])
             elif isinstance(msg, CommandMessage):
-                await asyncio.gather(*[l(msg) for l in self.command_listeners])
+                await asyncio.gather(*[cl(msg) for cl in self.command_listeners])
             self.queue.task_done()

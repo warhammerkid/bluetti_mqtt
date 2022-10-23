@@ -122,5 +122,6 @@ def main(argv=None):
     cli = CommandLineHandler(argv)
     cli.execute()
 
+
 if __name__ == "__main__":
     main(sys.argv)

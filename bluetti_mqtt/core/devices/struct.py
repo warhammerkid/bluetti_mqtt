@@ -61,8 +61,8 @@ class DecimalArrayField(DeviceField):
         return [Decimal(v) / 10 ** self.scale for v in values]
 
 
-"""Fixed-width null-terminated string field"""
 class StringField(DeviceField):
+    """Fixed-width null-terminated string field"""
     def parse(self, data: bytes) -> str:
         return data.rstrip(b'\0').decode('ascii')
 
@@ -124,7 +124,7 @@ class DeviceStruct:
         r = range(offset, offset + data_size)
         fields = [f for f in self.fields
                   if f.page == page and f.offset in r and f.offset + f.size - 1 in r]
-        
+
         # Parse fields
         parsed = {}
         for f in fields:

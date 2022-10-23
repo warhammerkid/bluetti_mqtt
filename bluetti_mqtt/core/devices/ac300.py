@@ -43,7 +43,7 @@ class AC300(BluettiDevice):
         self.struct.add_uint_field('ac_input_power', 0x00, 0x25)
         self.struct.add_uint_field('ac_output_power', 0x00, 0x26)
         self.struct.add_uint_field('dc_output_power', 0x00, 0x27)
-        self.struct.add_decimal_field('power_generation', 0x00, 0x29, 1) # Total power generated since last reset in kwh
+        self.struct.add_decimal_field('power_generation', 0x00, 0x29, 1)  # Total power generated since last reset (kwh)
         self.struct.add_uint_field('total_battery_percent', 0x00, 0x2B)
         self.struct.add_bool_field('ac_output_on', 0x00, 0x30)
         self.struct.add_bool_field('dc_output_on', 0x00, 0x31)
@@ -67,7 +67,7 @@ class AC300(BluettiDevice):
         # Page 0x00 - Battery Data
         self.struct.add_uint_field('pack_num_max', 0x00, 0x5B)
         self.struct.add_uint_field('pack_num', 0x00, 0x60)
-        self.struct.add_decimal_field('pack_voltage', 0x00, 0x62, 2) # Full pack voltage
+        self.struct.add_decimal_field('pack_voltage', 0x00, 0x62, 2)  # Full pack voltage
         self.struct.add_uint_field('pack_battery_percent', 0x00, 0x63)
         self.struct.add_decimal_array_field('cell_voltages', 0x00, 0x69, 16, 2)
         self.struct.add_version_field('pack_bms_version', 0x00, 0xC9)

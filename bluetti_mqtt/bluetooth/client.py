@@ -50,7 +50,7 @@ class BluetoothClient:
                     self._notification_handler)
                 await self._perform_commands(self.client)
             except (BleakError, asyncio.TimeoutError) as err:
-                logging.error('Reconnecting after error: {err}')
+                logging.error(f'Reconnecting after error: {err}')
                 continue
             except BadConnectionError as err:
                 logging.error(f'Delayed reconnect after error: {err}')

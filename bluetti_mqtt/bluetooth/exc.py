@@ -2,8 +2,8 @@ class ParseError(Exception):
     pass
 
 
-"""Used when requesting data from an invalid page/offset"""
 class InvalidRequestError(Exception):
+    """Used when requesting data from an invalid page/offset"""
     pass
 
 
