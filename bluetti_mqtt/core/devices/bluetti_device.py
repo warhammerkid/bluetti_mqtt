@@ -14,33 +14,33 @@ class BluettiDevice:
     def parse(self, page: int, offset: int, data: bytes) -> dict:
         return self.struct.parse(page, offset, data)
 
-    """
-    A given device has a maximum number of battery packs, including the
-    internal battery if it has one. We can provide this information statically
-    so it's not necessary to poll the device.
-    """
     @property
     def pack_num_max(self):
+        """
+        A given device has a maximum number of battery packs, including the
+        internal battery if it has one. We can provide this information statically
+        so it's not necessary to poll the device.
+        """
         return 1
 
-    """A given device has an optimal set of commands for polling"""
     @property
     def polling_commands(self) -> List[QueryRangeCommand]:
+        """A given device has an optimal set of commands for polling"""
         raise NotImplementedError
 
-    """A given device may have a set of commands for polling pack data"""
     @property
     def pack_polling_commands(self) -> List[QueryRangeCommand]:
+        """A given device may have a set of commands for polling pack data"""
         return []
 
-    """A given device has an optimal set of commands for debug logging"""
     @property
     def logging_commands(self) -> List[QueryRangeCommand]:
+        """A given device has an optimal set of commands for debug logging"""
         raise NotImplementedError
 
-    """A given device may have a set of commands for logging pack data"""
     @property
     def pack_logging_commands(self) -> List[QueryRangeCommand]:
+        """A given device may have a set of commands for logging pack data"""
         return []
 
     def has_field_setter(self, field: str):

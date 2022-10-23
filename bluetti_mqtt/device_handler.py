@@ -65,7 +65,7 @@ class DeviceHandler:
                 if device.pack_num_max > 1:
                     command = device.build_setter_command('pack_num', pack)
                     await self.manager.perform_nowait(device, command)
-                    await asyncio.sleep(10) # We need to wait after switching packs for the data to be available
+                    await asyncio.sleep(10)  # We need to wait after switching packs for the data to be available
 
                 # Poll
                 for command in device.pack_logging_commands:

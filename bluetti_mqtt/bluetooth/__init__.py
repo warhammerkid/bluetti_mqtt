@@ -34,10 +34,17 @@ async def check_addresses(addresses: Set[str]):
 
     def build_device(device: BLEDevice) -> BluettiDevice:
         match = DEVICE_NAME_RE.match(device.name)
-        if match[1] == 'AC200M': return AC200M(device.address, match[2])
-        if match[1] == 'AC300': return AC300(device.address, match[2])
-        if match[1] == 'AC500': return AC500(device.address, match[2])
-        if match[1] == 'EP500': return EP500(device.address, match[2])
-        if match[1] == 'EP500P': return EP500P(device.address, match[2])
-        if match[1] == 'EB3A': return EB3A(device.address, match[2])
+        if match[1] == 'AC200M':
+            return AC200M(device.address, match[2])
+        if match[1] == 'AC300':
+            return AC300(device.address, match[2])
+        if match[1] == 'AC500':
+            return AC500(device.address, match[2])
+        if match[1] == 'EP500':
+            return EP500(device.address, match[2])
+        if match[1] == 'EP500P':
+            return EP500P(device.address, match[2])
+        if match[1] == 'EB3A':
+            return EB3A(device.address, match[2])
+
     return [build_device(d) for d in filtered]

@@ -4,6 +4,7 @@ from typing import Dict, List
 from bluetti_mqtt.core import BluettiDevice, DeviceCommand
 from .client import BluetoothClient
 
+
 class MultiDeviceManager:
     clients: Dict[BluettiDevice, BluetoothClient]
 

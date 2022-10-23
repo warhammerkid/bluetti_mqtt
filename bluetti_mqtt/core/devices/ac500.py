@@ -13,7 +13,7 @@ class AC500(BluettiDevice):
         self.struct.add_uint_field('ac_input_power', 0x00, 0x25)
         self.struct.add_uint_field('ac_output_power', 0x00, 0x26)
         self.struct.add_uint_field('dc_output_power', 0x00, 0x27)
-        self.struct.add_decimal_field('power_generation', 0x00, 0x29, 1) # Total power generated since last reset in kwh
+        self.struct.add_decimal_field('power_generation', 0x00, 0x29, 1)  # Total power generated since last reset (kwh)
         self.struct.add_uint_field('total_battery_percent', 0x00, 0x2B)
         self.struct.add_bool_field('ac_output_on', 0x00, 0x30)
         self.struct.add_bool_field('dc_output_on', 0x00, 0x31)

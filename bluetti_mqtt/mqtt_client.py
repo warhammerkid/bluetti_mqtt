@@ -51,7 +51,12 @@ class MQTTClient:
         while True:
             logging.info('Connecting to MQTT broker...')
             try:
-                async with Client(hostname=self.hostname, port=self.port, username=self.username, password=self.password) as client:
+                async with Client(
+                    hostname=self.hostname,
+                    port=self.port,
+                    username=self.username,
+                    password=self.password
+                ) as client:
                     logging.info('Connected to MQTT broker')
 
                     # Connect to event bus
@@ -80,11 +85,11 @@ class MQTTClient:
                 await self._handle_command(mqtt_message)
 
     async def _handle_messages(self, client: Client):
-            while True:
-                msg: ParserMessage = await self.message_queue.get()
-                await self._handle_message(client, msg)
-                self.message_queue.task_done()
-    
+        while True:
+            msg: ParserMessage = await self.message_queue.get()
+            await self._handle_message(client, msg)
+            self.message_queue.task_done()
+
     async def _handle_command(self, mqtt_message: MQTTMessage):
         # Parse the mqtt_message.topic
         m = COMMAND_TOPIC_RE.match(mqtt_message.topic)
@@ -117,8 +122,6 @@ class MQTTClient:
         await self.bus.put(CommandMessage(device, cmd))
 
     async def _send_discovery_message(self, client: Client):
-
-        
         def payload(id: str, device: BluettiDevice, **kwargs) -> str:
             # Unknown keys are allowed but ignored by Home Assistant
             payload_dict = {
@@ -143,103 +146,110 @@ class MQTTClient:
 
         # Loop through devices
         for d in self.devices:
-            await client.publish(f'homeassistant/sensor/{d.sn}_ac_input_power/config',
-                                 payload=payload(
-                                     id='ac_input_power',
-                                     device=d,
-                                     name='AC Input Power',
-                                     unit_of_measurement='W',
-                                     device_class='power',
-                                     state_class='measurement',
-                                     force_update=True)
-                                     .encode(),
-                                 retain=True
-                                 )
+            await client.publish(
+                f'homeassistant/sensor/{d.sn}_ac_input_power/config',
+                payload=payload(
+                    id='ac_input_power',
+                    device=d,
+                    name='AC Input Power',
+                    unit_of_measurement='W',
+                    device_class='power',
+                    state_class='measurement',
+                    force_update=True
+                ).encode(),
+                retain=True
+            )
 
-            await client.publish(f'homeassistant/sensor/{d.sn}_dc_input_power/config',
-                                 payload=payload(
-                                     id='dc_input_power',
-                                     device=d,
-                                     name='DC Input Power',
-                                     unit_of_measurement='W',
-                                     device_class='power',
-                                     state_class='measurement',
-                                     force_update=True)
-                                     .encode(),
-                                 retain=True
-                                 )
+            await client.publish(
+                f'homeassistant/sensor/{d.sn}_dc_input_power/config',
+                payload=payload(
+                    id='dc_input_power',
+                    device=d,
+                    name='DC Input Power',
+                    unit_of_measurement='W',
+                    device_class='power',
+                    state_class='measurement',
+                    force_update=True
+                ).encode(),
+                retain=True
+            )
 
-            await client.publish(f'homeassistant/sensor/{d.sn}_ac_output_power/config',
-                        payload=payload(
-                            id='ac_output_power',
-                            device=d,
-                            name='AC Output Power',
-                            unit_of_measurement='W',
-                            device_class='power',
-                            state_class='measurement',
-                            force_update=True)
-                            .encode(),
-                        retain=True
-                        )
+            await client.publish(
+                f'homeassistant/sensor/{d.sn}_ac_output_power/config',
+                payload=payload(
+                    id='ac_output_power',
+                    device=d,
+                    name='AC Output Power',
+                    unit_of_measurement='W',
+                    device_class='power',
+                    state_class='measurement',
+                    force_update=True
+                ).encode(),
+                retain=True
+            )
 
-            await client.publish(f'homeassistant/sensor/{d.sn}_dc_output_power/config',
-                        payload=payload(
-                            id='dc_output_power',
-                            device=d,
-                            name='DC Output Power',
-                            unit_of_measurement='W',
-                            device_class='power',
-                            state_class='measurement',
-                            force_update=True)
-                            .encode(),
-                        retain=True
-                        )
+            await client.publish(
+                f'homeassistant/sensor/{d.sn}_dc_output_power/config',
+                payload=payload(
+                    id='dc_output_power',
+                    device=d,
+                    name='DC Output Power',
+                    unit_of_measurement='W',
+                    device_class='power',
+                    state_class='measurement',
+                    force_update=True
+                ).encode(),
+                retain=True
+            )
 
-            await client.publish(f'homeassistant/sensor/{d.sn}_total_battery_percent/config',
-                        payload=payload(
-                            id='total_battery_percent',
-                            device=d,
-                            name='Total Battery Percent',
-                            unit_of_measurement='%',
-                            device_class='battery',
-                            state_class='measurement')
-                            .encode(),
-                        retain=True
-                        )
+            await client.publish(
+                f'homeassistant/sensor/{d.sn}_total_battery_percent/config',
+                payload=payload(
+                    id='total_battery_percent',
+                    device=d,
+                    name='Total Battery Percent',
+                    unit_of_measurement='%',
+                    device_class='battery',
+                    state_class='measurement'
+                ).encode(),
+                retain=True
+            )
 
-            await client.publish(f'homeassistant/switch/{d.sn}_ac_output_on/config',
-                        payload=payload(
-                            id='ac_output_on',
-                            device=d,
-                            name='AC Output',
-                            device_class='outlet')
-                            .encode(),
-                        retain=True
-                        )
+            await client.publish(
+                f'homeassistant/switch/{d.sn}_ac_output_on/config',
+                payload=payload(
+                    id='ac_output_on',
+                    device=d,
+                    name='AC Output',
+                    device_class='outlet'
+                ).encode(),
+                retain=True
+            )
 
-            await client.publish(f'homeassistant/switch/{d.sn}_dc_output_on/config',
-                        payload=payload(
-                            id='dc_output_on',
-                            device=d,
-                            name='DC Output',
-                            device_class='outlet')
-                            .encode(),
-                        retain=True
-                        )
+            await client.publish(
+                f'homeassistant/switch/{d.sn}_dc_output_on/config',
+                payload=payload(
+                    id='dc_output_on',
+                    device=d,
+                    name='DC Output',
+                    device_class='outlet'
+                ).encode(),
+                retain=True
+            )
             if d.has_field_setter('led_mode'):
-                await client.publish(f'homeassistant/select/{d.sn}_led_mode/config',
-                            payload=payload(
-                                id='led_mode',
-                                device=d,
-                                name='LED Mode',
-                                icon='mdi:lightbulb',
-                                options= [ 'LOW', 'HIGH', 'SOS', 'OFF' ],
-                                force_update=True)
-                            .encode(),
-                            retain=True
-                            )
+                await client.publish(
+                    f'homeassistant/select/{d.sn}_led_mode/config',
+                    payload=payload(
+                        id='led_mode',
+                        device=d,
+                        name='LED Mode',
+                        icon='mdi:lightbulb',
+                        options=['LOW', 'HIGH', 'SOS', 'OFF'],
+                        force_update=True
+                    ).encode(),
+                    retain=True
+                )
             logging.info(f'Sent discovery message of {d.type}-{d.sn} to Home Assistant')
-
 
     async def _handle_message(self, client: Client, msg: ParserMessage):
         logging.debug(f'Got a message from {msg.device}: {msg.parsed}')
