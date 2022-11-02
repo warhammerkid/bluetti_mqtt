@@ -236,6 +236,21 @@ class MQTTClient:
                 ).encode(),
                 retain=True
             )
+
+            await client.publish(
+                f'homeassistant/sensor/{d.sn}_ac_input_voltage/config',
+                payload=payload(
+                    id='ac_input_voltage',
+                    device=d,
+                    name='AC Input Voltage',
+                    unit_of_measurement='V',
+                    device_class='power',
+                    state_class='measurement',
+                    force_update=True
+                ).encode(),
+                retain=True
+            )
+
             if d.has_field_setter('led_mode'):
                 await client.publish(
                     f'homeassistant/select/{d.sn}_led_mode/config',
