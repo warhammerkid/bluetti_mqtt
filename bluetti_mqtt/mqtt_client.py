@@ -374,6 +374,16 @@ class MQTTClient:
                 topic_prefix + 'ups_mode',
                 payload=msg.parsed['ups_mode'].name.encode()
             )
+        if 'split_phase_on' in msg.parsed:
+            await client.publish(
+                topic_prefix + 'split_phase_on',
+                payload=('ON' if msg.parsed['split_phase_on'] else 'OFF').encode()
+            )
+        if 'split_phase_machine_mode' in msg.parsed:
+            await client.publish(
+                topic_prefix + 'split_phase_machine_mode',
+                payload=msg.parsed['split_phase_machine_mode'].name.encode()
+            )
         if 'grid_charge_on' in msg.parsed:
             await client.publish(
                 topic_prefix + 'grid_charge_on',

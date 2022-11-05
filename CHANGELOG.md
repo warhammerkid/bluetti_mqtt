@@ -3,6 +3,7 @@
 ## FUTURE
 
 * Update AC500 support
+* Add split phase parsing support
 
 ## 0.9.2
 
