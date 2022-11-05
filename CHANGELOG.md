@@ -4,6 +4,7 @@
 
 * Update AC500 support
 * Add split phase parsing support
+* Remove unsupported power_generation field from EB3A
 
 ## 0.9.2
 
