@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+* Update AC500 support
+
 ## 0.9.2
 
 * Update EB3A support
