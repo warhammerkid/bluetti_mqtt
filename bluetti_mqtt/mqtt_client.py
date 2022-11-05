@@ -71,8 +71,8 @@ class MQTTClient:
                         self._handle_commands(client),
                         self._handle_messages(client)
                     )
-            except MqttError as error:
-                logging.error(f'MQTT error: {error}')
+            except MqttError:
+                logging.exception('MQTT error:')
                 await asyncio.sleep(5)
 
     async def handle_message(self, msg: ParserMessage):

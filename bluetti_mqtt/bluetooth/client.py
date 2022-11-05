@@ -38,9 +38,11 @@ class BluetoothClient:
             # Try to connect
             try:
                 await self.client.connect()
-            except BaseException as err:
-                logging.error(f'Error connecting to device: {err}')
+                logging.info(f'Connected to device: {self.address}')
+            except BaseException:
+                logging.exception(f'Error connecting to device {self.address}:')
                 await asyncio.sleep(1)
+                logging.info(f'Retrying connection to {self.address}')
                 continue
 
             # Register for notifications and run command loop
@@ -49,11 +51,11 @@ class BluetoothClient:
                     self.NOTIFY_UUID,
                     self._notification_handler)
                 await self._perform_commands(self.client)
-            except (BleakError, asyncio.TimeoutError) as err:
-                logging.error(f'Reconnecting after error: {err}')
+            except (BleakError, asyncio.TimeoutError):
+                logging.exception(f'Reconnecting to {self.address} after error:')
                 continue
-            except BadConnectionError as err:
-                logging.error(f'Delayed reconnect after error: {err}')
+            except BadConnectionError:
+                logging.exception(f'Delayed reconnect to {self.address} after error:')
                 await asyncio.sleep(1)
             finally:
                 await self.client.disconnect()
