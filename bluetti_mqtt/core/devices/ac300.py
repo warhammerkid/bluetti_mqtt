@@ -23,6 +23,12 @@ class UpsMode(Enum):
 
 
 @unique
+class MachineAddress(Enum):
+    SLAVE = 0
+    MASTER = 1
+
+
+@unique
 class AutoSleepMode(Enum):
     THIRTY_SECONDS = 2
     ONE_MINUTE = 3
@@ -74,6 +80,8 @@ class AC300(BluettiDevice):
 
         # Page 0x0B - Controls
         self.struct.add_enum_field('ups_mode', 0x0B, 0xB9, UpsMode)
+        self.struct.add_bool_field('split_phase_on', 0x0B, 0xBC)
+        self.struct.add_enum_field('split_phase_machine_mode', 0x0B, 0xBD, MachineAddress)
         self.struct.add_uint_field('pack_num', 0x0B, 0xBE)
         self.struct.add_bool_field('ac_output_on', 0x0B, 0xBF)
         self.struct.add_bool_field('dc_output_on', 0x0B, 0xC0)
