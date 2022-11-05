@@ -61,11 +61,30 @@ class CommandLineHandler:
         if args.scan:
             asyncio.run(scan_devices())
         elif args.hostname and len(args.addresses) > 0:
-            asyncio.run(self.start(args))
+            self.start(args)
         else:
             parser.print_help()
 
-    async def start(self, args: argparse.Namespace):
+    def start(self, args: argparse.Namespace):
+        loop = asyncio.get_event_loop()
+
+        # Register signal handlers for safe shutdown
+        if sys.platform != 'win32':
+            signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
+            for s in signals:
+                loop.add_signal_handler(s, lambda: asyncio.create_task(shutdown(loop)))
+
+        # Register a global exception handler so we don't hang
+        loop.set_exception_handler(handle_global_exception)
+
+        try:
+            loop.create_task(self.run(args))
+            loop.run_forever()
+        finally:
+            loop.close()
+            logging.debug("Shut down completed")
+
+    async def run(self, args: argparse.Namespace):
         loop = asyncio.get_running_loop()
         bus = EventBus()
 
@@ -75,9 +94,13 @@ class CommandLineHandler:
         if len(devices) == 0:
             sys.exit('Could not find the given devices to connect to')
 
-        # Start bluetooth handler (manages connections)
-        handler = DeviceHandler(devices, args.interval, bus)
-        self.bluetooth_task = loop.create_task(handler.run())
+        # Set up strong reference for tasks
+        self.background_tasks = set()
+
+        # Start event bus
+        bus_task = loop.create_task(bus.run())
+        self.background_tasks.add(bus_task)
+        bus_task.add_done_callback(self.background_tasks.discard)
 
         # Start MQTT client
         mqtt_client = MQTTClient(
@@ -88,36 +111,45 @@ class CommandLineHandler:
             username=args.username,
             password=args.password,
         )
-        self.mqtt_task = loop.create_task(mqtt_client.run())
+        mqtt_task = loop.create_task(mqtt_client.run())
+        self.background_tasks.add(mqtt_task)
+        mqtt_task.add_done_callback(self.background_tasks.discard)
 
-        # Register signal handlers for safe shutdown
-        if sys.platform != 'win32':
-            signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
-            for s in signals:
-                loop.add_signal_handler(s, lambda: asyncio.create_task(self.shutdown()))
+        # Start bluetooth handler (manages connections)
+        handler = DeviceHandler(devices, args.interval, bus)
+        bluetooth_task = loop.create_task(handler.run())
+        self.background_tasks.add(bluetooth_task)
+        bluetooth_task.add_done_callback(self.background_tasks.discard)
 
-        # Run until cancelled
-        try:
-            await bus.run()
-        except asyncio.CancelledError:
-            logging.debug('Event bus run cancelled')
 
-    async def shutdown(self):
-        logging.info('Shutting down...')
-        loop = asyncio.get_running_loop()
-        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-        [task.cancel() for task in tasks]
-        await asyncio.gather(*tasks, return_exceptions=True)
-        loop.stop()
+def handle_global_exception(loop, context):
+    if 'exception' in context:
+        logging.error('Crashing with uncaught exception:', exc_info=context['exception'])
+    else:
+        logging.error(f'Crashing with uncaught exception: {context["message"]}')
+    asyncio.create_task(shutdown(loop))
+
+
+async def shutdown(loop: asyncio.AbstractEventLoop):
+    logging.info('Shutting down...')
+    tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+    [task.cancel() for task in tasks]
+    await asyncio.gather(*tasks, return_exceptions=True)
+    loop.stop()
 
 
 def main(argv=None):
     debug = os.environ.get('DEBUG')
+    level = logging.INFO
     if debug:
-        logging.basicConfig(level=logging.DEBUG)
+        level = logging.DEBUG
         warnings.simplefilter('always')
-    else:
-        logging.basicConfig(level=logging.INFO)
+
+    logging.basicConfig(
+        datefmt='%Y-%m-%d %H:%M:%S',
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        level=level
+    )
 
     cli = CommandLineHandler(argv)
     cli.execute()

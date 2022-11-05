@@ -19,7 +19,7 @@ class DeviceHandler:
         loop = asyncio.get_running_loop()
 
         # Start manager
-        self.manager_task = loop.create_task(self.manager.run())
+        manager_task = loop.create_task(self.manager.run())
 
         # Connect to event bus
         self.bus.add_command_listener(self.handle_command)
@@ -28,7 +28,7 @@ class DeviceHandler:
         logging.info('Starting to poll clients...')
         polling_tasks = [self._poll(d) for d in self.manager.devices]
         pack_polling_tasks = [self._pack_poll(d) for d in self.manager.devices if len(d.pack_logging_commands) > 0]
-        await asyncio.gather(*(polling_tasks + pack_polling_tasks))
+        await asyncio.gather(*(polling_tasks + pack_polling_tasks + [manager_task]))
 
     async def handle_command(self, msg: CommandMessage):
         if self.manager.is_connected(msg.device):
