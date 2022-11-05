@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+## 0.10.0
+
 * Update AC500 support
 * Add split phase parsing support
 * Remove unsupported power_generation field from EB3A
