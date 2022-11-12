@@ -204,11 +204,11 @@ class MQTTClient:
 
             for pack in range(1, d.pack_num_max + 1):
                 await client.publish(
-                    f'homeassistant/sensor/{d.sn}_pack_details{pack}/config',
+                    f'homeassistant/sensor/{d.sn}_pack_details{pack}_percent/config',
                     payload=payload(
                         id=f'pack_details{pack}',
                         device=d,
-                        name=f'Pack {pack} Percent',
+                        name=f'Battery Pack {pack} Percent',
                         unit_of_measurement='%',
                         device_class='battery',
                         state_class='measurement',
