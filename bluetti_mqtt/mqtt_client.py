@@ -202,6 +202,21 @@ class MQTTClient:
                 retain=True
             )
 
+            for pack in range(1, d.pack_num_max + 1):
+                await client.publish(
+                    f'homeassistant/sensor/{d.sn}_pack_details{pack}/config',
+                    payload=payload(
+                        id=f'pack_details{pack}',
+                        device=d,
+                        name=f'Pack {pack} Percent',
+                        unit_of_measurement='%',
+                        device_class='battery',
+                        state_class='measurement',
+                        value_template='{{ value_json.percent }}'
+                    ).encode(),
+                    retain=True
+                )            
+            
             await client.publish(
                 f'homeassistant/sensor/{d.sn}_total_battery_percent/config',
                 payload=payload(
