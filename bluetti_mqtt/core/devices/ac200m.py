@@ -61,6 +61,7 @@ class AC200M(BluettiDevice):
         self.struct.add_uint_field('pack_num', 0x0B, 0xBE)
         self.struct.add_bool_field('ac_output_on', 0x0B, 0xBF)
         self.struct.add_bool_field('dc_output_on', 0x0B, 0xC0)
+        self.struct.add_bool_field('power_off', 0x0B, 0xF4)
         # 0xD7-0xD9 is the current device time & date without a timezone
         self.struct.add_enum_field('auto_sleep_mode', 0x0B, 0xF5, AutoSleepMode)
 
