@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+* Add power_off control to AC200M (@slash5k1)
+
 ## 0.10.0
 
 * Update AC500 support
