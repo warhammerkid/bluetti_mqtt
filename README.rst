@@ -78,19 +78,14 @@ Home Assistant Integration
 --------------------------
 
 If you have configured Home Assistant to use the same MQTT broker, then by
-default some data and switches will be automatically configured there. This is
+default most data and switches will be automatically configured there. This is
 possible thanks to Home Assistant's support for automatic MQTT discovery, which
 is enabled by default with the discovery prefix of `homeassistant`.
 
-Supported sensors and switches:
-
-- AC input power sensor (W)
-- DC input power sensor (W)
-- AC output power sensor (W)
-- DC output power sensor (W)
-- Total battery percent
-- AC output switch
-- DC output switch
+This can be controlled with the `--ha-config` flag, which defaults to
+configuring most fields ("normal"). Home Assistant MQTT discovery can also be
+disabled, or additional internal device fields can be configured with the
+"advanced" option.
 
 Reverse Engineering
 -------------------

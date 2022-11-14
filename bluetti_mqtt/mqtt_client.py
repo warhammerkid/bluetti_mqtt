@@ -1,4 +1,6 @@
 import asyncio
+from dataclasses import dataclass
+from enum import auto, Enum, unique
 import json
 import logging
 import re
@@ -9,22 +11,409 @@ from bluetti_mqtt.bus import CommandMessage, EventBus, ParserMessage
 from bluetti_mqtt.core import BluettiDevice, DeviceCommand
 
 
+@unique
+class MqttFieldType(Enum):
+    NUMERIC = auto()
+    BOOL = auto()
+    ENUM = auto()
+
+
+@dataclass(frozen=True)
+class MqttFieldConfig:
+    type: MqttFieldType
+    setter: bool
+    advanced: bool  # Do not export by default to Home Assistant
+    home_assistant_extra: dict
+    id_override: Optional[str] = None  # Used to override Home Assistant field id
+
+
 COMMAND_TOPIC_RE = re.compile(r'^bluetti/command/(\w+)-(\d+)/([a-z_]+)$')
-ENUM_SETTER_FIELDS = {
-    'ups_mode',
-    'auto_sleep_mode',
-    'led_mode',
-    'eco_shutdown',
-    'charging_mode'
+NORMAL_DEVICE_FIELDS = {
+    'dc_input_power': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'DC Input Power',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'ac_input_power': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC Input Power',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'ac_output_power': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC Output Power',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'dc_output_power': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'DC Output Power',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'power_generation': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Total Power Generation',
+            'unit_of_measurement': 'kWh',
+            'device_class': 'energy',
+            'state_class': 'total_increasing',
+        }
+    ),
+    'total_battery_percent': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Total Battery Percent',
+            'unit_of_measurement': '%',
+            'device_class': 'battery',
+            'state_class': 'measurement',
+        }
+    ),
+    'ac_output_on': MqttFieldConfig(
+        type=MqttFieldType.BOOL,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC Output',
+            'device_class': 'outlet',
+        }
+    ),
+    'dc_output_on': MqttFieldConfig(
+        type=MqttFieldType.BOOL,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'DC Output',
+            'device_class': 'outlet',
+        }
+    ),
+    'ac_output_mode': MqttFieldConfig(
+        type=MqttFieldType.ENUM,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'AC Output Mode',
+        }
+    ),
+    'internal_ac_voltage': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Internal AC Voltage',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'internal_current_one': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Internal Current Sensor 1',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'internal_power_one': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Internal Power Sensor 1',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'internal_ac_frequency': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Internal AC Frequency',
+            'unit_of_measurement': 'Hz',
+            'device_class': 'frequency',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'internal_current_two': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Internal Current Sensor 2',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'internal_power_two': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Internal Power Sensor 2',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'ac_input_voltage': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'AC Input Voltage',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'internal_current_three': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Internal Current Sensor 3',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'internal_power_three': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Internal Power Sensor 3',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'ac_input_frequency': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'AC Input Frequency',
+            'unit_of_measurement': 'Hz',
+            'device_class': 'frequency',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'ups_mode': MqttFieldConfig(
+        type=MqttFieldType.ENUM,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'UPS Working Mode',
+            'options': ['CUSTOMIZED', 'PV_PRIORITY', 'STANDARD', 'TIME_CONTROL'],
+        }
+    ),
+    'split_phase_on': MqttFieldConfig(
+        type=MqttFieldType.BOOL,
+        setter=False,  # For safety purposes, I'm not exposing this as a setter
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Split Phase',
+        }
+    ),
+    'split_phase_machine_mode': MqttFieldConfig(
+        type=MqttFieldType.ENUM,
+        setter=False,  # For safety purposes, I'm not exposing this as a setter
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Split Phase Machine',
+        }
+    ),
+    'grid_charge_on': MqttFieldConfig(
+        type=MqttFieldType.BOOL,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Grid Charge',
+        }
+    ),
+    'time_control_on': MqttFieldConfig(
+        type=MqttFieldType.BOOL,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Time Control',
+        }
+    ),
+    'battery_range_start': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Battery Range Start',
+            'step': 1,
+            'min': 0,
+            'max': 100,
+            'unit_of_measurement': '%',
+        }
+    ),
+    'battery_range_end': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Battery Range End',
+            'step': 1,
+            'min': 0,
+            'max': 100,
+            'unit_of_measurement': '%',
+        }
+    ),
+    'led_mode': MqttFieldConfig(
+        type=MqttFieldType.ENUM,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'LED Mode',
+            'icon': 'mdi:lightbulb',
+            'options': ['LOW', 'HIGH', 'SOS', 'OFF'],
+        }
+    ),
+    'power_off': MqttFieldConfig(
+        type=MqttFieldType.BOOL,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Power Off',
+        }
+    ),
+    'auto_sleep_mode': MqttFieldConfig(
+        type=MqttFieldType.ENUM,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Screen Auto Sleep Mode',
+            'icon': 'mdi:sleep',
+            'options': ['THIRTY_SECONDS', 'ONE_MINUTE', 'FIVE_MINUTES', 'NEVER'],
+        }
+    ),
+    'eco_on': MqttFieldConfig(
+        type=MqttFieldType.BOOL,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'ECO',
+            'icon': 'mdi:sprout',
+        }
+    ),
+    'eco_shutdown': MqttFieldConfig(
+        type=MqttFieldType.ENUM,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'ECO Shutdown',
+            'icon': 'mdi:sprout',
+            'options': ['ONE_HOUR', 'TWO_HOURS', 'THREE_HOURS', 'FOUR_HOURS'],
+        }
+    ),
+    'charging_mode': MqttFieldConfig(
+        type=MqttFieldType.ENUM,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Charging Mode',
+            'icon': 'mdi:battery-charging',
+            'options': ['STANDARD', 'SILENT', 'TURBO'],
+        }
+    ),
+    'power_lifting_on': MqttFieldConfig(
+        type=MqttFieldType.BOOL,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Power Lifting',
+            'icon': 'mdi:arm-flex',
+        }
+    ),
 }
-BOOL_SETTER_FIELDS = {
-    'ac_output_on',
-    'dc_output_on',
-    'grid_charge_on',
-    'time_control_on',
-    'power_off',
-    'eco_on',
-    'power_lifting_on'
+DC_INPUT_FIELDS = {
+    'dc_input_voltage1': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'DC Input Voltage 1',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'dc_input_power1': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'DC Input Power 1',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'dc_input_current1': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'DC Input Current 1',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
 }
 
 
@@ -36,6 +425,7 @@ class MQTTClient:
         devices: List[BluettiDevice],
         bus: EventBus,
         hostname: str,
+        home_assistant_mode: str,
         port: int = 1883,
         username: Optional[str] = None,
         password: Optional[str] = None,
@@ -46,6 +436,7 @@ class MQTTClient:
         self.port = port
         self.username = username
         self.password = password
+        self.home_assistant_mode = home_assistant_mode
 
     async def run(self):
         while True:
@@ -63,8 +454,9 @@ class MQTTClient:
                     self.message_queue = asyncio.Queue()
                     self.bus.add_parser_listener(self.handle_message)
 
-                    # Announce device to Home Assistant
-                    await self._send_discovery_message(client)
+                    # Announce devices to Home Assistant if enabled
+                    if self.home_assistant_mode != 'none':
+                        await self._send_discovery_message(client)
 
                     # Handle pub/sub
                     await asyncio.gather(
@@ -109,24 +501,25 @@ class MQTTClient:
             return
 
         cmd: DeviceCommand = None
-        if m[3] in ENUM_SETTER_FIELDS:
-            value = mqtt_message.payload.decode('ascii')
-            cmd = device.build_setter_command(m[3], value)
-        elif m[3] in BOOL_SETTER_FIELDS:
-            value = mqtt_message.payload == b'ON'
-            cmd = device.build_setter_command(m[3], value)
+        if m[3] in NORMAL_DEVICE_FIELDS:
+            field = NORMAL_DEVICE_FIELDS[m[3]]
+            if field.type == MqttFieldType.ENUM:
+                value = mqtt_message.payload.decode('ascii')
+                cmd = device.build_setter_command(m[3], value)
+            elif field.type == MqttFieldType.BOOL:
+                value = mqtt_message.payload == b'ON'
+                cmd = device.build_setter_command(m[3], value)
         else:
-            logging.warn(f'Recevied command for unhandled topic: {m[3]} - {mqtt_message.topic}')
+            logging.warn(f'Received command for unhandled topic: {m[3]} - {mqtt_message.topic}')
             return
 
         await self.bus.put(CommandMessage(device, cmd))
 
     async def _send_discovery_message(self, client: Client):
-        def payload(id: str, device: BluettiDevice, **kwargs) -> str:
-            # Unknown keys are allowed but ignored by Home Assistant
+        def payload(id: str, device: BluettiDevice, field: MqttFieldConfig) -> str:
+            ha_id = id if not field.id_override else field.id_override
             payload_dict = {
                 'state_topic': f'bluetti/state/{device.type}-{device.sn}/{id}',
-                'command_topic': f'bluetti/command/{device.type}-{device.sn}/{id}',
                 'device': {
                     'identifiers': [
                         f'{device.sn}'
@@ -135,216 +528,98 @@ class MQTTClient:
                     'name': f'{device.type} {device.sn}',
                     'model': device.type
                 },
-                'unique_id': f'{device.sn}_{id}',
-                'object_id': f'{device.type}_{id}',
+                'unique_id': f'{device.sn}_{ha_id}',
+                'object_id': f'{device.type}_{ha_id}',
             }
+            if field.setter:
+                payload_dict['command_topic'] = f'bluetti/command/{device.type}-{device.sn}/{id}'
+            payload_dict.update(field.home_assistant_extra)
 
-            for key, value in kwargs.items():
-                payload_dict[key] = value
-
-            return json.dumps(payload_dict)
+            return json.dumps(payload_dict, separators=(',', ':'))
 
         # Loop through devices
         for d in self.devices:
-            await client.publish(
-                f'homeassistant/sensor/{d.sn}_ac_input_power/config',
-                payload=payload(
-                    id='ac_input_power',
-                    device=d,
-                    name='AC Input Power',
-                    unit_of_measurement='W',
-                    device_class='power',
-                    state_class='measurement',
-                    force_update=True
-                ).encode(),
-                retain=True
-            )
+            # Publish normal fields
+            for name, field in NORMAL_DEVICE_FIELDS.items():
+                # Skip fields not supported by the device
+                if not d.has_field(name):
+                    continue
 
-            await client.publish(
-                f'homeassistant/sensor/{d.sn}_dc_input_power/config',
-                payload=payload(
-                    id='dc_input_power',
-                    device=d,
-                    name='DC Input Power',
-                    unit_of_measurement='W',
-                    device_class='power',
-                    state_class='measurement',
-                    force_update=True
-                ).encode(),
-                retain=True
-            )
+                # Skip advanced fields if not enabled
+                if field.advanced and self.home_assistant_mode != 'advanced':
+                    continue
 
-            await client.publish(
-                f'homeassistant/sensor/{d.sn}_ac_output_power/config',
-                payload=payload(
-                    id='ac_output_power',
-                    device=d,
-                    name='AC Output Power',
-                    unit_of_measurement='W',
-                    device_class='power',
-                    state_class='measurement',
-                    force_update=True
-                ).encode(),
-                retain=True
-            )
+                # Figure out Home Assistant type
+                if field.type == MqttFieldType.NUMERIC:
+                    type = 'number' if field.setter else 'sensor'
+                elif field.type == MqttFieldType.BOOL:
+                    type = 'switch' if field.setter else 'binary_sensor'
+                elif field.type == MqttFieldType.ENUM:
+                    type = 'select' if field.setter else 'sensor'
 
-            await client.publish(
-                f'homeassistant/sensor/{d.sn}_dc_output_power/config',
-                payload=payload(
-                    id='dc_output_power',
-                    device=d,
-                    name='DC Output Power',
-                    unit_of_measurement='W',
-                    device_class='power',
-                    state_class='measurement',
-                    force_update=True
-                ).encode(),
-                retain=True
-            )
-
-            await client.publish(
-                f'homeassistant/sensor/{d.sn}_total_battery_percent/config',
-                payload=payload(
-                    id='total_battery_percent',
-                    device=d,
-                    name='Total Battery Percent',
-                    unit_of_measurement='%',
-                    device_class='battery',
-                    state_class='measurement'
-                ).encode(),
-                retain=True
-            )
-
-            await client.publish(
-                f'homeassistant/switch/{d.sn}_ac_output_on/config',
-                payload=payload(
-                    id='ac_output_on',
-                    device=d,
-                    name='AC Output',
-                    device_class='outlet'
-                ).encode(),
-                retain=True
-            )
-
-            await client.publish(
-                f'homeassistant/switch/{d.sn}_dc_output_on/config',
-                payload=payload(
-                    id='dc_output_on',
-                    device=d,
-                    name='DC Output',
-                    device_class='outlet'
-                ).encode(),
-                retain=True
-            )
-            if d.has_field_setter('led_mode'):
+                # Publish config
                 await client.publish(
-                    f'homeassistant/select/{d.sn}_led_mode/config',
-                    payload=payload(
-                        id='led_mode',
-                        device=d,
-                        name='LED Mode',
-                        icon='mdi:lightbulb',
-                        options=['LOW', 'HIGH', 'SOS', 'OFF'],
-                        force_update=True
-                    ).encode(),
+                    f'homeassistant/{type}/{d.sn}_{name}/config',
+                    payload=payload(name, d, field).encode(),
                     retain=True
                 )
+
+            # Publish battery pack configs
+            for pack in range(1, d.pack_num_max + 1):
+                fields = self._battery_pack_fields(pack)
+                for field in fields:
+                    await client.publish(
+                        f'homeassistant/sensor/{d.sn}_{field.id_override}/config',
+                        payload=payload(f'pack_details{pack}', d, field).encode(),
+                        retain=True
+                    )
+
+            # Publish DC input config
+            if d.has_field('internal_dc_input_voltage'):
+                for name, field in DC_INPUT_FIELDS.items():
+                    await client.publish(
+                        f'homeassistant/sensor/{d.sn}_{name}/config',
+                        payload=payload(name, d, field).encode(),
+                        retain=True
+                    )
+
             logging.info(f'Sent discovery message of {d.type}-{d.sn} to Home Assistant')
 
     async def _handle_message(self, client: Client, msg: ParserMessage):
         logging.debug(f'Got a message from {msg.device}: {msg.parsed}')
         topic_prefix = f'bluetti/state/{msg.device.type}-{msg.device.sn}/'
 
-        if 'ac_input_power' in msg.parsed:
+        # Publish normal fields
+        for name, value in msg.parsed.items():
+            # Skip unconfigured fields
+            if name not in NORMAL_DEVICE_FIELDS:
+                continue
+
+            # Build payload string
+            field = NORMAL_DEVICE_FIELDS[name]
+            if field.type == MqttFieldType.NUMERIC:
+                payload = str(value)
+            elif field.type == MqttFieldType.BOOL:
+                payload = 'ON' if value else 'OFF'
+            elif field.type == MqttFieldType.ENUM:
+                payload = value.name
+            else:
+                assert False, f'Unhandled field type: {field.type.name}'
+
+            await client.publish(topic_prefix + name, payload=payload.encode())
+
+        # Publish battery pack data
+        if 'pack_battery_percent' in msg.parsed:
+            pack_details = {
+                'percent': msg.parsed['pack_battery_percent'],
+                'voltages': [float(d) for d in msg.parsed['cell_voltages']],
+            }
             await client.publish(
-                topic_prefix + 'ac_input_power',
-                payload=str(msg.parsed['ac_input_power']).encode()
+                topic_prefix + f'pack_details{msg.parsed["pack_num"]}',
+                payload=json.dumps(pack_details, separators=(',', ':')).encode()
             )
-        if 'dc_input_power' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'dc_input_power',
-                payload=str(msg.parsed['dc_input_power']).encode()
-            )
-        if 'ac_output_power' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'ac_output_power',
-                payload=str(msg.parsed['ac_output_power']).encode()
-            )
-        if 'dc_output_power' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'dc_output_power',
-                payload=str(msg.parsed['dc_output_power']).encode()
-            )
-        if 'total_battery_percent' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'total_battery_percent',
-                payload=str(msg.parsed['total_battery_percent']).encode()
-            )
-        if 'ac_output_on' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'ac_output_on',
-                payload=('ON' if msg.parsed['ac_output_on'] else 'OFF').encode()
-            )
-        if 'dc_output_on' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'dc_output_on',
-                payload=('ON' if msg.parsed['dc_output_on'] else 'OFF').encode()
-            )
-        if 'ac_output_mode' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'ac_output_mode',
-                payload=msg.parsed['ac_output_mode'].name.encode()
-            )
-        if 'internal_ac_voltage' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'internal_ac_voltage',
-                payload=str(msg.parsed['internal_ac_voltage']).encode()
-            )
-        if 'internal_current_one' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'internal_current_one',
-                payload=str(msg.parsed['internal_current_one']).encode()
-            )
-        if 'internal_power_one' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'internal_power_one',
-                payload=str(msg.parsed['internal_power_one']).encode()
-            )
-        if 'internal_ac_frequency' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'internal_ac_frequency',
-                payload=str(msg.parsed['internal_ac_frequency']).encode()
-            )
-        if 'internal_current_two' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'internal_current_two',
-                payload=str(msg.parsed['internal_current_two']).encode()
-            )
-        if 'internal_power_two' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'internal_power_two',
-                payload=str(msg.parsed['internal_power_two']).encode()
-            )
-        if 'ac_input_voltage' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'ac_input_voltage',
-                payload=str(msg.parsed['ac_input_voltage']).encode()
-            )
-        if 'internal_current_three' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'internal_current_three',
-                payload=str(msg.parsed['internal_current_three']).encode()
-            )
-        if 'internal_power_three' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'internal_power_three',
-                payload=str(msg.parsed['internal_power_three']).encode()
-            )
-        if 'ac_input_frequency' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'ac_input_frequency',
-                payload=str(msg.parsed['ac_input_frequency']).encode()
-            )
+
+        # Publish DC input data
         if 'internal_dc_input_voltage' in msg.parsed:
             await client.publish(
                 topic_prefix + 'dc_input_voltage1',
@@ -360,77 +635,20 @@ class MQTTClient:
                 topic_prefix + 'dc_input_current1',
                 payload=str(msg.parsed['internal_dc_input_current']).encode()
             )
-        if 'pack_battery_percent' in msg.parsed:
-            pack_details = {
-                'percent': msg.parsed['pack_battery_percent'],
-                'voltages': [float(d) for d in msg.parsed['cell_voltages']],
-            }
-            await client.publish(
-                topic_prefix + f'pack_details{msg.parsed["pack_num"]}',
-                payload=json.dumps(pack_details, separators=(',', ':')).encode()
+
+    def _battery_pack_fields(self, pack: int):
+        return [
+            MqttFieldConfig(
+                type=MqttFieldType.NUMERIC,
+                setter=False,
+                advanced=False,
+                home_assistant_extra={
+                    'name': f'Battery Pack {pack} Percent',
+                    'unit_of_measurement': '%',
+                    'device_class': 'battery',
+                    'state_class': 'measurement',
+                    'value_template': '{{ value_json.percent }}'
+                },
+                id_override=f'pack_percent{pack}'
             )
-        if 'ups_mode' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'ups_mode',
-                payload=msg.parsed['ups_mode'].name.encode()
-            )
-        if 'split_phase_on' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'split_phase_on',
-                payload=('ON' if msg.parsed['split_phase_on'] else 'OFF').encode()
-            )
-        if 'split_phase_machine_mode' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'split_phase_machine_mode',
-                payload=msg.parsed['split_phase_machine_mode'].name.encode()
-            )
-        if 'grid_charge_on' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'grid_charge_on',
-                payload=('ON' if msg.parsed['grid_charge_on'] else 'OFF').encode()
-            )
-        if 'time_control_on' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'time_control_on',
-                payload=('ON' if msg.parsed['time_control_on'] else 'OFF').encode()
-            )
-        if 'battery_range_start' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'battery_range_start',
-                payload=str(msg.parsed['battery_range_start']).encode()
-            )
-        if 'battery_range_end' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'battery_range_end',
-                payload=str(msg.parsed['battery_range_end']).encode()
-            )
-        if 'auto_sleep_mode' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'auto_sleep_mode',
-                payload=msg.parsed['auto_sleep_mode'].name.encode()
-            )
-        if 'led_mode' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'led_mode',
-                payload=msg.parsed['led_mode'].name.encode()
-            )
-        if 'eco_on' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'eco_on',
-                payload=('ON' if msg.parsed['eco_on'] else 'OFF').encode()
-            )
-        if 'eco_shutdown' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'eco_shutdown',
-                payload=msg.parsed['eco_shutdown'].name.encode()
-            )
-        if 'charging_mode' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'charging_mode',
-                payload=msg.parsed['charging_mode'].name.encode()
-            )
-        if 'power_lifting_on' in msg.parsed:
-            await client.publish(
-                topic_prefix + 'power_lifting_on',
-                payload=('ON' if msg.parsed['power_lifting_on'] else 'OFF').encode()
-            )
+        ]
