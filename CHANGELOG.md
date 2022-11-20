@@ -2,6 +2,9 @@
 
 ## FUTURE
 
+* Re-write MQTT client to make Home Assistant config easier, and add most fields to Home Assistant config
+* Add new command line flag to control what fields get configured in Home Assistant
+
 ## 0.10.0
 
 * Update AC500 support

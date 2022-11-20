@@ -47,6 +47,11 @@ class CommandLineHandler:
             type=int,
             help='The polling interval - default is to poll as fast as possible')
         parser.add_argument(
+            '--ha-config',
+            default='normal',
+            choices=['normal', 'none', 'advanced'],
+            help='What fields to configure in Home Assistant - defaults to most fields ("normal")')
+        parser.add_argument(
             'addresses',
             metavar='ADDRESS',
             nargs='*',
@@ -107,6 +112,7 @@ class CommandLineHandler:
             devices=devices,
             bus=bus,
             hostname=args.hostname,
+            home_assistant_mode=args.ha_config,
             port=args.port,
             username=args.username,
             password=args.password,

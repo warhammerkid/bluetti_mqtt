@@ -43,6 +43,9 @@ class BluettiDevice:
         """A given device may have a set of commands for logging pack data"""
         return []
 
+    def has_field(self, field: str):
+        return any(f.name == field for f in self.struct.fields)
+
     def has_field_setter(self, field: str):
         return any(f.page == 0x0B and f.name == field for f in self.struct.fields)
 
