@@ -16,6 +16,7 @@ class MqttFieldType(Enum):
     NUMERIC = auto()
     BOOL = auto()
     ENUM = auto()
+    BUTTON = auto()
 
 
 @dataclass(frozen=True)
@@ -321,11 +322,12 @@ NORMAL_DEVICE_FIELDS = {
         }
     ),
     'power_off': MqttFieldConfig(
-        type=MqttFieldType.BOOL,
+        type=MqttFieldType.BUTTON,
         setter=True,
         advanced=False,
         home_assistant_extra={
             'name': 'Power Off',
+            'payload_press': 'ON',
         }
     ),
     'auto_sleep_mode': MqttFieldConfig(
@@ -506,7 +508,7 @@ class MQTTClient:
             if field.type == MqttFieldType.ENUM:
                 value = mqtt_message.payload.decode('ascii')
                 cmd = device.build_setter_command(m[3], value)
-            elif field.type == MqttFieldType.BOOL:
+            elif field.type == MqttFieldType.BOOL or field.type == MqttFieldType.BUTTON:
                 value = mqtt_message.payload == b'ON'
                 cmd = device.build_setter_command(m[3], value)
         else:
@@ -556,6 +558,8 @@ class MQTTClient:
                     type = 'switch' if field.setter else 'binary_sensor'
                 elif field.type == MqttFieldType.ENUM:
                     type = 'select' if field.setter else 'sensor'
+                elif field.type == MqttFieldType.BUTTON:
+                    type = 'button'
 
                 # Publish config
                 await client.publish(
@@ -599,7 +603,7 @@ class MQTTClient:
             field = NORMAL_DEVICE_FIELDS[name]
             if field.type == MqttFieldType.NUMERIC:
                 payload = str(value)
-            elif field.type == MqttFieldType.BOOL:
+            elif field.type == MqttFieldType.BOOL or field.type == MqttFieldType.BUTTON:
                 payload = 'ON' if value else 'OFF'
             elif field.type == MqttFieldType.ENUM:
                 payload = value.name
