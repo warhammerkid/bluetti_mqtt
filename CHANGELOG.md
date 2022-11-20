@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+## 0.11.0
+
 * Re-write MQTT client to make Home Assistant config easier, and add most fields to Home Assistant config
 * Add new command line flag to control what fields get configured in Home Assistant
 * Add power_off control to AC200M (@slash5k1)
