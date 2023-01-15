@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+* Fix bug where attempting to set numeric fields would cause a crash
+
 ## 0.11.0
 
 * Re-write MQTT client to make Home Assistant config easier, and add most fields to Home Assistant config

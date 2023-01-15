@@ -511,6 +511,11 @@ class MQTTClient:
             elif field.type == MqttFieldType.BOOL or field.type == MqttFieldType.BUTTON:
                 value = mqtt_message.payload == b'ON'
                 cmd = device.build_setter_command(m[3], value)
+            elif field.type == MqttFieldType.NUMERIC:
+                value = int(mqtt_message.payload.decode('ascii'))
+                cmd = device.build_setter_command(m[3], value)
+            else:
+                raise AssertionError(f'unexpected enum type: {field.type}')
         else:
             logging.warn(f'Received command for unhandled topic: {m[3]} - {mqtt_message.topic}')
             return
