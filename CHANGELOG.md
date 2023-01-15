@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+## 0.11.1
+
 * Fix bug where attempting to set numeric fields would cause a crash
 
 ## 0.11.0
