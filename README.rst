@@ -3,8 +3,8 @@ bluetti_mqtt
 ============
 
 This tool provides an MQTT interface to Bluetti power stations. State will be
-published to the `bluetti/state/[DEVICE NAME]/[PROPERTY]` topic, and commands
-can be sent to the `bluetti/command/[DEVICE NAME]/[PROPERTY]` topic.
+published to the ``bluetti/state/[DEVICE NAME]/[PROPERTY]`` topic, and commands
+can be sent to the ``bluetti/command/[DEVICE NAME]/[PROPERTY]`` topic.
 
 Installation
 ------------
@@ -49,10 +49,10 @@ Background Service
 ------------------
 
 If you are running on a platform with systemd, you can use the following as a
-template. It should be placed in `/etc/systemd/system/bluetti-mqtt.service`.
+template. It should be placed in ``/etc/systemd/system/bluetti-mqtt.service``.
 Once you've written the file, you'll need to run
-`sudo systemctl start bluetti-mqtt`. If you want it to run automatically after
-rebooting, you'll also need to run `sudo systemctl enable bluetti-mqtt`.
+``sudo systemctl start bluetti-mqtt``. If you want it to run automatically after
+rebooting, you'll also need to run ``sudo systemctl enable bluetti-mqtt``.
 
 .. code-block:: bash
 
@@ -80,9 +80,9 @@ Home Assistant Integration
 If you have configured Home Assistant to use the same MQTT broker, then by
 default most data and switches will be automatically configured there. This is
 possible thanks to Home Assistant's support for automatic MQTT discovery, which
-is enabled by default with the discovery prefix of `homeassistant`.
+is enabled by default with the discovery prefix of ``homeassistant``.
 
-This can be controlled with the `--ha-config` flag, which defaults to
+This can be controlled with the ``--ha-config`` flag, which defaults to
 configuring most fields ("normal"). Home Assistant MQTT discovery can also be
 disabled, or additional internal device fields can be configured with the
 "advanced" option.
@@ -90,8 +90,8 @@ disabled, or additional internal device fields can be configured with the
 Reverse Engineering
 -------------------
 
-For research purposes you can also use the `bluetti-logger` command to poll the
-device and log in a standardised format.
+For research purposes you can also use the ``bluetti-logger`` command to poll
+the device and log in a standardised format.
 
 .. code-block:: bash
 
@@ -108,3 +108,14 @@ support collecting bluetooth logs from running apps. Additionally, with the
 correct hardware Wireshark can be used to collect logs. With these logs and a
 report of what commands were sent at what times, this data can be used to
 reverse engineer support.
+
+For supporting new devices, the ``bluetti-discovery`` command is provided. It
+will scan from 0x0000 to 0x30ff assuming MODBUS-over-Bluetooth. This will take
+a while and requires that the scanned device be in close Bluetooth range for
+optimal performance.
+
+.. code-block:: bash
+
+    $ bluetti-discovery --scan
+    Found AC3001234567890123: address 00:11:22:33:44:55
+    $ bluetti-discovery --log the-log-file.log 00:11:22:33:44:55
