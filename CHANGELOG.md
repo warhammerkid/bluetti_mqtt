@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+* Add a bluetti-discovery command that can collect information from unsupported Bluetti devices
+
 ## 0.11.1
 
 * Fix bug where attempting to set numeric fields would cause a crash

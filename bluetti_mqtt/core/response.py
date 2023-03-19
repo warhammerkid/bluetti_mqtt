@@ -20,7 +20,7 @@ class CommandResponse:
 
     """If you send a bad request, you'll get an "invalid request" error"""
     def is_invalid_error(self):
-        return len(self.data) == 5 and self.data[1] == 0x83
+        return len(self.data) > 2 and self.data[1] == 0x83
 
     """Validates that the reponse is complete and uncorrupted"""
     def is_valid(self):
