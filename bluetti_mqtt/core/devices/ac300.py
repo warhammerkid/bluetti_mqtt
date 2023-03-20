@@ -68,7 +68,7 @@ class AC300(BluettiDevice):
         self.struct.add_decimal_field('ac_input_frequency', 0x00, 0x50, 2)
         self.struct.add_decimal_field('internal_dc_input_voltage', 0x00, 0x56, 1)
         self.struct.add_uint_field('internal_dc_input_power', 0x00, 0x57)
-        self.struct.add_decimal_field('internal_dc_input_current', 0x00, 0x58, 1)
+        self.struct.add_decimal_field('internal_dc_input_current', 0x00, 0x58, 1, (0, 15))
 
         # Page 0x00 - Battery Data
         self.struct.add_uint_field('pack_num_max', 0x00, 0x5B)

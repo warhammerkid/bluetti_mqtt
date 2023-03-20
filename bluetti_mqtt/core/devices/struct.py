@@ -1,7 +1,7 @@
 from decimal import Decimal
 from enum import Enum
 import struct
-from typing import Any, List, Type
+from typing import Any, List, Optional, Tuple, Type
 
 
 class DeviceField:
@@ -14,13 +14,23 @@ class DeviceField:
     def parse(self, data: bytes) -> Any:
         raise NotImplementedError
 
+    def in_range(self, val: Any) -> bool:
+        return True
+
 
 class UintField(DeviceField):
-    def __init__(self, name: str, page: int, offset: int):
+    def __init__(self, name: str, page: int, offset: int, range: Optional[Tuple[int, int]]):
+        self.range = range
         super().__init__(name, page, offset, 1)
 
     def parse(self, data: bytes) -> int:
         return struct.unpack('!H', data)[0]
+
+    def in_range(self, val: int) -> bool:
+        if self.range is None:
+            return True
+        else:
+            return val >= self.range[0] and val <= self.range[1]
 
 
 class BoolField(DeviceField):
@@ -42,13 +52,20 @@ class EnumField(DeviceField):
 
 
 class DecimalField(DeviceField):
-    def __init__(self, name: str, page: int, offset: int, scale: int):
+    def __init__(self, name: str, page: int, offset: int, scale: int, range: Optional[Tuple[int, int]]):
         self.scale = scale
+        self.range = range
         super().__init__(name, page, offset, 1)
 
     def parse(self, data: bytes) -> Decimal:
         val = Decimal(struct.unpack('!H', data)[0])
         return val / 10 ** self.scale
+
+    def in_range(self, val: Decimal) -> bool:
+        if self.range is None:
+            return True
+        else:
+            return val >= self.range[0] and val <= self.range[1]
 
 
 class DecimalArrayField(DeviceField):
@@ -91,8 +108,8 @@ class DeviceStruct:
     def __init__(self):
         self.fields = []
 
-    def add_uint_field(self, name: str, page: int, offset: int):
-        self.fields.append(UintField(name, page, offset))
+    def add_uint_field(self, name: str, page: int, offset: int, range: Tuple[int, int] = None):
+        self.fields.append(UintField(name, page, offset, range))
 
     def add_bool_field(self, name: str, page: int, offset: int):
         self.fields.append(BoolField(name, page, offset))
@@ -100,8 +117,8 @@ class DeviceStruct:
     def add_enum_field(self, name: str, page: int, offset: int, enum: Type[Enum]):
         self.fields.append(EnumField(name, page, offset, enum))
 
-    def add_decimal_field(self, name: str, page: int, offset: int, scale: int):
-        self.fields.append(DecimalField(name, page, offset, scale))
+    def add_decimal_field(self, name: str, page: int, offset: int, scale: int, range: Tuple[int, int] = None):
+        self.fields.append(DecimalField(name, page, offset, scale, range))
 
     def add_decimal_array_field(self, name: str, page: int, offset: int, size: int, scale: int):
         self.fields.append(DecimalArrayField(name, page, offset, size, scale))
@@ -130,6 +147,13 @@ class DeviceStruct:
         for f in fields:
             data_start = 2 * (f.offset - offset)
             field_data = data[data_start:data_start + 2 * f.size]
-            parsed[f.name] = f.parse(field_data)
+            val = f.parse(field_data)
+
+            # Skip if the value is "out-of-range" - sometimes the sensors
+            # report weird values
+            if not f.in_range(val):
+                continue
+
+            parsed[f.name] = val
 
         return parsed
