@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+## 0.12.0
+
 * Add a bluetti-discovery command that can collect information from unsupported Bluetti devices
 * Out-of-range DC input current values are no longer reported
 
