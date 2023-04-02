@@ -4,6 +4,14 @@ import struct
 from typing import Any, List, Optional, Tuple, Type
 
 
+def swap_bytes(data: bytes):
+    """Swaps the place of every other byte, returning a new byte array"""
+    arr = bytearray(data)
+    for i in range(0, len(arr) - 1, 2):
+        arr[i], arr[i + 1] = arr[i + 1], arr[i]
+    return arr
+
+
 class DeviceField:
     def __init__(self, name: str, page: int, offset: int, size: int):
         self.name = name
@@ -84,6 +92,12 @@ class StringField(DeviceField):
         return data.rstrip(b'\0').decode('ascii')
 
 
+class SwapStringField(DeviceField):
+    """Fixed-width null-terminated string field"""
+    def parse(self, data: bytes) -> str:
+        return swap_bytes(data).rstrip(b'\0').decode('ascii')
+
+
 class VersionField(DeviceField):
     def __init__(self, name: str, page: int, offset: int):
         super().__init__(name, page, offset, 2)
@@ -125,6 +139,9 @@ class DeviceStruct:
 
     def add_string_field(self, name: str, page: int, offset: int, size: int):
         self.fields.append(StringField(name, page, offset, size))
+
+    def add_swap_string_field(self, name: str, page: int, offset: int, size: int):
+        self.fields.append(SwapStringField(name, page, offset, size))
 
     def add_version_field(self, name: str, page: int, offset: int):
         self.fields.append(VersionField(name, page, offset))

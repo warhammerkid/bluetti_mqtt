@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+* Add initial logging support for EP600 (and very basic polling)
+
 ## 0.12.0
 
 * Add a bluetti-discovery command that can collect information from unsupported Bluetti devices
