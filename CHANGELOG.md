@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+## 0.13.0
+
 * Add initial logging support for EP600 (and very basic polling)
 
 ## 0.12.0
