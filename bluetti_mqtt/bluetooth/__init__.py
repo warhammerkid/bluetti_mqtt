@@ -3,13 +3,13 @@ import re
 from typing import Set
 from bleak import BleakScanner
 from bleak.backends.device import BLEDevice
-from bluetti_mqtt.core import BluettiDevice, AC200M, AC300, AC500, EP500, EP500P, EB3A
+from bluetti_mqtt.core import BluettiDevice, AC200M, AC300, AC500, EP500, EP500P, EP600, EB3A
 from .client import BluetoothClient
 from .exc import BadConnectionError, InvalidRequestError, ParseError
 from .manager import MultiDeviceManager
 
 
-DEVICE_NAME_RE = re.compile(r'^(AC200M|AC300|AC500|EP500P|EP500|EB3A)(\d+)$')
+DEVICE_NAME_RE = re.compile(r'^(AC200M|AC300|AC500|EP500P|EP500|EP600|EB3A)(\d+)$')
 
 
 async def scan_devices():
@@ -44,6 +44,8 @@ async def check_addresses(addresses: Set[str]):
             return EP500(device.address, match[2])
         if match[1] == 'EP500P':
             return EP500P(device.address, match[2])
+        if match[1] == 'EP600':
+            return EP600(device.address, match[2])
         if match[1] == 'EB3A':
             return EB3A(device.address, match[2])
 
