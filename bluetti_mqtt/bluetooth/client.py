@@ -1,8 +1,8 @@
 import asyncio
 import logging
 from bleak import BleakClient, BleakError
-from bluetti_mqtt.core import CommandResponse, DeviceCommand
-from .exc import BadConnectionError, InvalidRequestError, ParseError
+from bluetti_mqtt.core import DeviceCommand
+from .exc import BadConnectionError, ModbusError, ParseError
 
 
 class BluetoothClient:
@@ -12,7 +12,7 @@ class BluetoothClient:
 
     current_command: DeviceCommand
     notify_future: asyncio.Future
-    notify_response: CommandResponse
+    notify_response: bytearray
 
     def __init__(self, address: str):
         self.address = address
@@ -69,7 +69,7 @@ class BluetoothClient:
                     # Prepare to make request
                     self.current_command = cmd
                     self.notify_future = self.loop.create_future()
-                    self.notify_response = CommandResponse(bytearray())
+                    self.notify_response = bytearray()
 
                     # Make request
                     await client.write_gatt_char(
@@ -91,7 +91,7 @@ class BluetoothClient:
                     await asyncio.sleep(self.RESPONSE_TIMEOUT)
                 except asyncio.TimeoutError:
                     retries += 1
-                except (InvalidRequestError, BleakError) as err:
+                except (ModbusError, BleakError) as err:
                     if cmd_future:
                         cmd_future.set_exception(err)
 
@@ -128,11 +128,11 @@ class BluetoothClient:
         self.notify_response.extend(data)
 
         if len(self.notify_response) == self.current_command.response_size():
-            if self.notify_response.is_valid():
+            if self.current_command.is_valid_response(self.notify_response):
                 self.notify_future.set_result(self.notify_response)
             else:
                 self.notify_future.set_exception(ParseError('Failed checksum'))
-        elif self.notify_response.is_invalid_error():
-            # We got an invalid request error response
-            msg = f'Error {self.notify_response.data[2]}'
-            self.notify_future.set_exception(InvalidRequestError(msg))
+        elif self.current_command.is_exception_response(self.notify_response):
+            # We got a MODBUS command exception
+            msg = f'MODBUS Exception {self.current_command}: {self.notify_response[2]}'
+            self.notify_future.set_exception(ModbusError(msg))

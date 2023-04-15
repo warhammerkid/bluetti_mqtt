@@ -2,6 +2,7 @@
 
 ## FUTURE
 
+* BREAKING: The internal API has changed to better reflect standard MODBUS terminology
 * Out-of-range internal_current_three values are no longer reported for AC300
 
 ## 0.13.0

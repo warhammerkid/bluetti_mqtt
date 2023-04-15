@@ -2,8 +2,8 @@ class ParseError(Exception):
     pass
 
 
-class InvalidRequestError(Exception):
-    """Used when requesting data from an invalid page/offset"""
+class ModbusError(Exception):
+    """Used when the command returns a MODBUS exception"""
     pass
 
 

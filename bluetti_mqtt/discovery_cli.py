@@ -8,15 +8,11 @@ import sys
 import textwrap
 import time
 from typing import cast
-from bluetti_mqtt.bluetooth import (
-    BluetoothClient, InvalidRequestError, ParseError, BadConnectionError
-)
-from bluetti_mqtt.core import (
-    CommandResponse, QueryRangeCommand
-)
+from bluetti_mqtt.bluetooth import BluetoothClient, ModbusError, ParseError, BadConnectionError
+from bluetti_mqtt.core import ReadHoldingRegisters
 
 
-def log_packet(output: TextIOWrapper, data: bytes, command: QueryRangeCommand):
+def log_packet(output: TextIOWrapper, data: bytes, command: ReadHoldingRegisters):
     log_entry = {
         'type': 'client',
         'time': time.strftime('%Y-%m-%d %H:%M:%S %z', time.localtime()),
@@ -26,7 +22,7 @@ def log_packet(output: TextIOWrapper, data: bytes, command: QueryRangeCommand):
     output.write(json.dumps(log_entry) + '\n')
 
 
-def log_invalid(output: TextIOWrapper, err: Exception, command: QueryRangeCommand):
+def log_invalid(output: TextIOWrapper, err: Exception, command: ReadHoldingRegisters):
     log_entry = {
         'type': 'client',
         'time': time.strftime('%Y-%m-%d %H:%M:%S %z', time.localtime()),
@@ -36,16 +32,16 @@ def log_invalid(output: TextIOWrapper, err: Exception, command: QueryRangeComman
     output.write(json.dumps(log_entry) + '\n')
 
 
-async def log_command(client: BluetoothClient, command: QueryRangeCommand, log_file: TextIOWrapper):
+async def log_command(client: BluetoothClient, command: ReadHoldingRegisters, log_file: TextIOWrapper):
     response_future = await client.perform(command)
     try:
-        response = cast(CommandResponse, await response_future)
-        print(f'Device data readable at {command.page} {command.offset}')
-        log_packet(log_file, response.data, command)
+        response = cast(bytes, await response_future)
+        print(f'Device data readable at {command.starting_address}')
+        log_packet(log_file, response, command)
     except (BadConnectionError, BleakError, ParseError) as err:
         print(f'Got an error running command {command}: {err}')
         log_invalid(log_file, err, command)
-    except InvalidRequestError as err:
+    except ModbusError as err:
         # This is expected if we attempt to access an invalid address
         log_invalid(log_file, err, command)
 
@@ -75,7 +71,7 @@ async def discover(address: str, path: str):
         # Work our way through all the valid addresses
         print('Discovering device data - THIS MAY TAKE SEVERAL HOURS')
         print('0% complete with discovery')
-        max_address = 0x30ff
+        max_address = 12500
         last_percent = 0
         for address in range(0, max_address + 1):
             # Log progress
@@ -85,7 +81,7 @@ async def discover(address: str, path: str):
                 last_percent = percent
 
             # Query address
-            command = QueryRangeCommand(address >> 8, address & 0xFF, 1)
+            command = ReadHoldingRegisters(address, 1)
             await log_command(client, command, log_file)
 
 

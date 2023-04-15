@@ -1,6 +1,6 @@
 from enum import Enum, unique
 from typing import List
-from ..commands import QueryRangeCommand
+from ..commands import ReadHoldingRegisters
 from .bluetti_device import BluettiDevice
 from .struct import DeviceStruct
 
@@ -40,81 +40,85 @@ class EP500(BluettiDevice):
     def __init__(self, address: str, sn: str):
         self.struct = DeviceStruct()
 
-        # Page 0x00 - Core
-        self.struct.add_string_field('device_type', 0x00, 0x0A, 6)
-        self.struct.add_sn_field('serial_number', 0x00, 0x11)
-        self.struct.add_version_field('arm_version', 0x00, 0x17)
-        self.struct.add_version_field('dsp_version', 0x00, 0x19)
-        self.struct.add_uint_field('dc_input_power', 0x00, 0x24)
-        self.struct.add_uint_field('ac_input_power', 0x00, 0x25)
-        self.struct.add_uint_field('ac_output_power', 0x00, 0x26)
-        self.struct.add_uint_field('dc_output_power', 0x00, 0x27)
-        self.struct.add_decimal_field('power_generation', 0x00, 0x29, 1)  # Total power generated since last reset (kwh)
-        self.struct.add_uint_field('total_battery_percent', 0x00, 0x2B)
-        self.struct.add_bool_field('ac_output_on', 0x00, 0x30)
-        self.struct.add_bool_field('dc_output_on', 0x00, 0x31)
+        # Core
+        self.struct.add_string_field('device_type', 10, 6)
+        self.struct.add_sn_field('serial_number', 17)
+        self.struct.add_version_field('arm_version', 23)
+        self.struct.add_version_field('dsp_version', 25)
+        self.struct.add_uint_field('dc_input_power', 36)
+        self.struct.add_uint_field('ac_input_power', 37)
+        self.struct.add_uint_field('ac_output_power', 38)
+        self.struct.add_uint_field('dc_output_power', 39)
+        self.struct.add_decimal_field('power_generation', 41, 1)  # Total power generated since last reset (kwh)
+        self.struct.add_uint_field('total_battery_percent', 43)
+        self.struct.add_bool_field('ac_output_on', 48)
+        self.struct.add_bool_field('dc_output_on', 49)
 
-        # Page 0x00 - Details
-        self.struct.add_enum_field('ac_output_mode', 0x00, 0x46, OutputMode)
-        self.struct.add_decimal_field('internal_ac_voltage', 0x00, 0x47, 1)
-        self.struct.add_decimal_field('internal_current_one', 0x00, 0x48, 1)
-        self.struct.add_uint_field('internal_power_one', 0x00, 0x49)
-        self.struct.add_decimal_field('internal_ac_frequency', 0x00, 0x4A, 2)
-        self.struct.add_decimal_field('internal_current_two', 0x00, 0x4B, 1)
-        self.struct.add_uint_field('internal_power_two', 0x00, 0x4C)
-        self.struct.add_decimal_field('ac_input_voltage', 0x00, 0x4D, 1)
-        self.struct.add_decimal_field('internal_current_three', 0x00, 0x4E, 1)
-        self.struct.add_uint_field('internal_power_three', 0x00, 0x4F)
-        self.struct.add_decimal_field('ac_input_frequency', 0x00, 0x50, 2)
-        self.struct.add_decimal_field('internal_dc_input_voltage', 0x00, 0x56, 1)
-        self.struct.add_uint_field('internal_dc_input_power', 0x00, 0x57)
-        self.struct.add_decimal_field('internal_dc_input_current', 0x00, 0x58, 1, (0, 15))
+        # Details
+        self.struct.add_enum_field('ac_output_mode', 70, OutputMode)
+        self.struct.add_decimal_field('internal_ac_voltage', 71, 1)
+        self.struct.add_decimal_field('internal_current_one', 72, 1)
+        self.struct.add_uint_field('internal_power_one', 73)
+        self.struct.add_decimal_field('internal_ac_frequency', 74, 2)
+        self.struct.add_decimal_field('internal_current_two', 75, 1)
+        self.struct.add_uint_field('internal_power_two', 76)
+        self.struct.add_decimal_field('ac_input_voltage', 77, 1)
+        self.struct.add_decimal_field('internal_current_three', 78, 1)
+        self.struct.add_uint_field('internal_power_three', 79)
+        self.struct.add_decimal_field('ac_input_frequency', 80, 2)
+        self.struct.add_decimal_field('internal_dc_input_voltage', 86, 1)
+        self.struct.add_uint_field('internal_dc_input_power', 87)
+        self.struct.add_decimal_field('internal_dc_input_current', 88, 1, (0, 15))
 
-        # Page 0x00 - Battery Data
-        self.struct.add_uint_field('pack_num_max', 0x00, 0x5B)
-        self.struct.add_decimal_field('pack_voltage', 0x00, 0x5C, 1)  # Full pack voltage
-        self.struct.add_uint_field('pack_battery_percent', 0x00, 0x5E)
-        self.struct.add_uint_field('pack_num', 0x00, 0x60)
-        self.struct.add_decimal_array_field('cell_voltages', 0x00, 0x69, 16, 2)
+        # Battery Data
+        self.struct.add_uint_field('pack_num_max', 91)
+        self.struct.add_decimal_field('pack_voltage', 92, 1)  # Full pack voltage
+        self.struct.add_uint_field('pack_battery_percent', 94)
+        self.struct.add_uint_field('pack_num', 96)
+        self.struct.add_decimal_array_field('cell_voltages', 105, 16, 2)
 
-        # Page 0x0B - Controls
-        self.struct.add_enum_field('ups_mode', 0x0B, 0xB9, UpsMode)
-        self.struct.add_bool_field('split_phase_on', 0x0B, 0xBC)
-        self.struct.add_enum_field('split_phase_machine_mode', 0x0B, 0xBD, MachineAddress)
-        self.struct.add_uint_field('pack_num', 0x0B, 0xBE)
-        self.struct.add_bool_field('ac_output_on', 0x0B, 0xBF)
-        self.struct.add_bool_field('dc_output_on', 0x0B, 0xC0)
-        self.struct.add_bool_field('grid_charge_on', 0x0B, 0xC3)
-        self.struct.add_bool_field('time_control_on', 0x0B, 0xC5)
-        self.struct.add_uint_field('battery_range_start', 0x0B, 0xC7)
-        self.struct.add_uint_field('battery_range_end', 0x0B, 0xC8)
-        # 0xD7-0xD9 is the current device time & date without a timezone
-        self.struct.add_bool_field('bluetooth_connected', 0x0B, 0xDC)
-        # 0xDF-0xF0 is the time control programming
-        self.struct.add_enum_field('auto_sleep_mode', 0x0B, 0xF5, AutoSleepMode)
+        # Controls
+        self.struct.add_enum_field('ups_mode', 3001, UpsMode)
+        self.struct.add_bool_field('split_phase_on', 3004)
+        self.struct.add_enum_field('split_phase_machine_mode', 3005, MachineAddress)
+        self.struct.add_uint_field('pack_num', 3006)
+        self.struct.add_bool_field('ac_output_on', 3007)
+        self.struct.add_bool_field('dc_output_on', 3008)
+        self.struct.add_bool_field('grid_charge_on', 3011)
+        self.struct.add_bool_field('time_control_on', 3013)
+        self.struct.add_uint_field('battery_range_start', 3015)
+        self.struct.add_uint_field('battery_range_end', 3016)
+        # 3031-3033 is the current device time & date without a timezone
+        self.struct.add_bool_field('bluetooth_connected', 3036)
+        # 3039-3056 is the time control programming
+        self.struct.add_enum_field('auto_sleep_mode', 3061, AutoSleepMode)
 
         super().__init__(address, 'EP500', sn)
 
     @property
-    def polling_commands(self) -> List[QueryRangeCommand]:
+    def polling_commands(self) -> List[ReadHoldingRegisters]:
         return [
-            QueryRangeCommand(0x00, 0x0A, 0x28),
-            QueryRangeCommand(0x00, 0x46, 0x15),
-            QueryRangeCommand(0x0B, 0xB9, 0x3D),
+            ReadHoldingRegisters(10, 40),
+            ReadHoldingRegisters(70, 21),
+            ReadHoldingRegisters(3001, 61),
         ]
 
     @property
-    def pack_polling_commands(self) -> List[QueryRangeCommand]:
-        return [QueryRangeCommand(0x00, 0x5B, 0x25)]
+    def pack_polling_commands(self) -> List[ReadHoldingRegisters]:
+        return [ReadHoldingRegisters(91, 37)]
 
     @property
-    def logging_commands(self) -> List[QueryRangeCommand]:
+    def logging_commands(self) -> List[ReadHoldingRegisters]:
         return [
-            QueryRangeCommand(0x00, 0x00, 0x46),
-            QueryRangeCommand(0x00, 0x46, 0x15),
-            QueryRangeCommand(0x0B, 0xB9, 0x3D),
+            ReadHoldingRegisters(0, 70),
+            ReadHoldingRegisters(70, 21),
+            ReadHoldingRegisters(3001, 61),
         ]
 
     @property
-    def pack_logging_commands(self) -> List[QueryRangeCommand]:
-        return [QueryRangeCommand(0x00, 0x5B, 0x77)]
+    def pack_logging_commands(self) -> List[ReadHoldingRegisters]:
+        return [ReadHoldingRegisters(91, 119)]
+
+    @property
+    def writable_ranges(self) -> List[range]:
+        return [range(3000, 3062)]

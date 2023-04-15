@@ -9,11 +9,11 @@ import textwrap
 import time
 from typing import cast
 from bluetti_mqtt.bluetooth import (
-    check_addresses, scan_devices, BluetoothClient, InvalidRequestError,
+    check_addresses, scan_devices, BluetoothClient, ModbusError,
     ParseError, BadConnectionError
 )
 from bluetti_mqtt.core import (
-    BluettiDevice, CommandResponse, QueryRangeCommand, DeviceCommand
+    BluettiDevice, ReadHoldingRegisters, DeviceCommand
 )
 
 
@@ -40,12 +40,13 @@ def log_invalid(output: TextIOWrapper, err: Exception, command: DeviceCommand):
 async def log_command(client: BluetoothClient, device: BluettiDevice, command: DeviceCommand, log_file: TextIOWrapper):
     response_future = await client.perform(command)
     try:
-        response = cast(CommandResponse, await response_future)
-        if isinstance(command, QueryRangeCommand):
-            parsed = device.parse(command.page, command.offset, response.body)
+        response = cast(bytes, await response_future)
+        if isinstance(command, ReadHoldingRegisters):
+            body = command.parse_response(response)
+            parsed = device.parse(command.starting_address, body)
             print(parsed)
-        log_packet(log_file, response.data, command)
-    except (BadConnectionError, BleakError, InvalidRequestError, ParseError) as err:
+        log_packet(log_file, response, command)
+    except (BadConnectionError, BleakError, ModbusError, ParseError) as err:
         print(f'Got an error running command {command}: {err}')
         log_invalid(log_file, err, command)
 
