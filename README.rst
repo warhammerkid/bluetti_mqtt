@@ -110,8 +110,8 @@ report of what commands were sent at what times, this data can be used to
 reverse engineer support.
 
 For supporting new devices, the ``bluetti-discovery`` command is provided. It
-will scan from 0x0000 to 0x30ff assuming MODBUS-over-Bluetooth. This will take
-a while and requires that the scanned device be in close Bluetooth range for
+will scan from 0 to 12500 assuming MODBUS-over-Bluetooth. This will take a
+while and requires that the scanned device be in close Bluetooth range for
 optimal performance.
 
 .. code-block:: bash

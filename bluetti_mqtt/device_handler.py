@@ -4,9 +4,9 @@ import logging
 import time
 from typing import List, cast
 from bluetti_mqtt.bluetooth import BadConnectionError, MultiDeviceManager, ParseError
-from bluetti_mqtt.bluetooth.exc import InvalidRequestError
+from bluetti_mqtt.bluetooth.exc import ModbusError
 from bluetti_mqtt.bus import CommandMessage, EventBus, ParserMessage
-from bluetti_mqtt.core import BluettiDevice, CommandResponse, QueryRangeCommand
+from bluetti_mqtt.core import BluettiDevice, ReadHoldingRegisters
 
 
 class DeviceHandler:
@@ -76,15 +76,16 @@ class DeviceHandler:
             if self.interval > 0 and self.interval > elapsed:
                 await asyncio.sleep(self.interval - elapsed)
 
-    async def _poll_with_command(self, device: BluettiDevice, command: QueryRangeCommand):
+    async def _poll_with_command(self, device: BluettiDevice, command: ReadHoldingRegisters):
         response_future = await self.manager.perform(device, command)
         try:
-            response = cast(CommandResponse, await response_future)
-            parsed = device.parse(command.page, command.offset, response.body)
+            response = cast(bytes, await response_future)
+            body = command.parse_response(response)
+            parsed = device.parse(command.starting_address, body)
             await self.bus.put(ParserMessage(device, parsed))
         except ParseError:
             logging.debug('Got a parse exception...')
-        except InvalidRequestError as err:
+        except ModbusError as err:
             logging.debug(f'Got an invalid request error for {command}: {err}')
         except (BadConnectionError, BleakError) as err:
             logging.debug(f'Needed to disconnect due to error: {err}')

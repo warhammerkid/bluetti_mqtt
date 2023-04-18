@@ -6,5 +6,10 @@ from .devices.ep500 import EP500
 from .devices.ep500p import EP500P
 from .devices.ep600 import EP600
 from .devices.eb3a import EB3A
-from .commands import DeviceCommand, QueryRangeCommand, UpdateFieldCommand, UpdateRangeCommand
-from .response import CommandResponse
+from .commands import (
+    DeviceCommand,
+    ModbusDeviceCommand,
+    ReadHoldingRegisters,
+    WriteSingleRegister,
+    WriteMultipleRegisters
+)
