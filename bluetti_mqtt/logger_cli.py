@@ -63,7 +63,7 @@ async def log(address: str, path: str):
 
     with open(path, 'a') as log_file:
         # Wait for device connection
-        while not client.is_connected:
+        while not client.is_ready:
             print('Waiting for connection...')
             await asyncio.sleep(1)
             continue

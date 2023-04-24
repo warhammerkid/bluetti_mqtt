@@ -3,9 +3,10 @@ import asyncio
 import logging
 import os
 import signal
+from typing import List
 import warnings
 import sys
-from bluetti_mqtt.bluetooth import check_addresses, scan_devices
+from bluetti_mqtt.bluetooth import scan_devices
 from bluetti_mqtt.bus import EventBus
 from bluetti_mqtt.device_handler import DeviceHandler
 from bluetti_mqtt.mqtt_client import MQTTClient
@@ -93,12 +94,6 @@ class CommandLineHandler:
         loop = asyncio.get_running_loop()
         bus = EventBus()
 
-        # Verify that we can see all the given addresses
-        addresses = set(args.addresses)
-        devices = await check_addresses(addresses)
-        if len(devices) == 0:
-            sys.exit('Could not find the given devices to connect to')
-
         # Set up strong reference for tasks
         self.background_tasks = set()
 
@@ -109,7 +104,6 @@ class CommandLineHandler:
 
         # Start MQTT client
         mqtt_client = MQTTClient(
-            devices=devices,
             bus=bus,
             hostname=args.hostname,
             home_assistant_mode=args.ha_config,
@@ -122,7 +116,8 @@ class CommandLineHandler:
         mqtt_task.add_done_callback(self.background_tasks.discard)
 
         # Start bluetooth handler (manages connections)
-        handler = DeviceHandler(devices, args.interval, bus)
+        addresses: List[str] = list(set(args.addresses))
+        handler = DeviceHandler(addresses, args.interval, bus)
         bluetooth_task = loop.create_task(handler.run())
         self.background_tasks.add(bluetooth_task)
         bluetooth_task.add_done_callback(self.background_tasks.discard)

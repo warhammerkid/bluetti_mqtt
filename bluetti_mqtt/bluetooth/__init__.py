@@ -23,6 +23,24 @@ async def scan_devices():
             print(f'Found {d.name}: address {d.address}')
 
 
+def build_device(address: str, name: str):
+    match = DEVICE_NAME_RE.match(name)
+    if match[1] == 'AC200M':
+        return AC200M(address, match[2])
+    if match[1] == 'AC300':
+        return AC300(address, match[2])
+    if match[1] == 'AC500':
+        return AC500(address, match[2])
+    if match[1] == 'EP500':
+        return EP500(address, match[2])
+    if match[1] == 'EP500P':
+        return EP500P(address, match[2])
+    if match[1] == 'EP600':
+        return EP600(address, match[2])
+    if match[1] == 'EB3A':
+        return EB3A(address, match[2])
+
+
 async def check_addresses(addresses: Set[str]):
     logging.debug(f'Checking we can connect: {addresses}')
     devices = await BleakScanner.discover()
@@ -32,21 +50,4 @@ async def check_addresses(addresses: Set[str]):
     if len(filtered) != len(addresses):
         return []
 
-    def build_device(device: BLEDevice) -> BluettiDevice:
-        match = DEVICE_NAME_RE.match(device.name)
-        if match[1] == 'AC200M':
-            return AC200M(device.address, match[2])
-        if match[1] == 'AC300':
-            return AC300(device.address, match[2])
-        if match[1] == 'AC500':
-            return AC500(device.address, match[2])
-        if match[1] == 'EP500':
-            return EP500(device.address, match[2])
-        if match[1] == 'EP500P':
-            return EP500P(device.address, match[2])
-        if match[1] == 'EP600':
-            return EP600(device.address, match[2])
-        if match[1] == 'EB3A':
-            return EB3A(device.address, match[2])
-
-    return [build_device(d) for d in filtered]
+    return [build_device(d.address, d.name) for d in filtered]
