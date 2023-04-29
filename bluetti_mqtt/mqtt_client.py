@@ -420,11 +420,11 @@ DC_INPUT_FIELDS = {
 
 
 class MQTTClient:
+    devices: List[BluettiDevice]
     message_queue: asyncio.Queue
 
     def __init__(
         self,
-        devices: List[BluettiDevice],
         bus: EventBus,
         hostname: str,
         home_assistant_mode: str,
@@ -432,13 +432,13 @@ class MQTTClient:
         username: Optional[str] = None,
         password: Optional[str] = None,
     ):
-        self.devices = devices
         self.bus = bus
         self.hostname = hostname
         self.port = port
         self.username = username
         self.password = password
         self.home_assistant_mode = home_assistant_mode
+        self.devices = []
 
     async def run(self):
         while True:
@@ -455,10 +455,6 @@ class MQTTClient:
                     # Connect to event bus
                     self.message_queue = asyncio.Queue()
                     self.bus.add_parser_listener(self.handle_message)
-
-                    # Announce devices to Home Assistant if enabled
-                    if self.home_assistant_mode != 'none':
-                        await self._send_discovery_message(client)
 
                     # Handle pub/sub
                     await asyncio.gather(
@@ -481,8 +477,87 @@ class MQTTClient:
     async def _handle_messages(self, client: Client):
         while True:
             msg: ParserMessage = await self.message_queue.get()
+            if msg.device not in self.devices:
+                await self._init_device(msg.device, client)
             await self._handle_message(client, msg)
             self.message_queue.task_done()
+
+    async def _init_device(self, device: BluettiDevice, client: Client):
+        # Register device
+        self.devices.append(device)
+
+        # Skip announcing device to Home Assistant if disabled
+        if self.home_assistant_mode == 'none':
+            return
+
+        def payload(id: str, device: BluettiDevice, field: MqttFieldConfig) -> str:
+            ha_id = id if not field.id_override else field.id_override
+            payload_dict = {
+                'state_topic': f'bluetti/state/{device.type}-{device.sn}/{id}',
+                'device': {
+                    'identifiers': [
+                        f'{device.sn}'
+                    ],
+                    'manufacturer': 'Bluetti',
+                    'name': f'{device.type} {device.sn}',
+                    'model': device.type
+                },
+                'unique_id': f'{device.sn}_{ha_id}',
+                'object_id': f'{device.type}_{ha_id}',
+            }
+            if field.setter:
+                payload_dict['command_topic'] = f'bluetti/command/{device.type}-{device.sn}/{id}'
+            payload_dict.update(field.home_assistant_extra)
+
+            return json.dumps(payload_dict, separators=(',', ':'))
+
+        # Publish normal fields
+        for name, field in NORMAL_DEVICE_FIELDS.items():
+            # Skip fields not supported by the device
+            if not device.has_field(name):
+                continue
+
+            # Skip advanced fields if not enabled
+            if field.advanced and self.home_assistant_mode != 'advanced':
+                continue
+
+            # Figure out Home Assistant type
+            if field.type == MqttFieldType.NUMERIC:
+                type = 'number' if field.setter else 'sensor'
+            elif field.type == MqttFieldType.BOOL:
+                type = 'switch' if field.setter else 'binary_sensor'
+            elif field.type == MqttFieldType.ENUM:
+                type = 'select' if field.setter else 'sensor'
+            elif field.type == MqttFieldType.BUTTON:
+                type = 'button'
+
+            # Publish config
+            await client.publish(
+                f'homeassistant/{type}/{device.sn}_{name}/config',
+                payload=payload(name, device, field).encode(),
+                retain=True
+            )
+
+        # Publish battery pack configs
+        for pack in range(1, device.pack_num_max + 1):
+            fields = self._battery_pack_fields(pack)
+            for field in fields:
+                await client.publish(
+                    f'homeassistant/sensor/{device.sn}_{field.id_override}/config',
+                    payload=payload(f'pack_details{pack}', device, field).encode(),
+                    retain=True
+                )
+
+        # Publish DC input config
+        if device.has_field('internal_dc_input_voltage'):
+            for name, field in DC_INPUT_FIELDS.items():
+                await client.publish(
+                    f'homeassistant/sensor/{device.sn}_{name}/config',
+                    payload=payload(name, device, field).encode(),
+                    retain=True
+                )
+
+        logging.info(f'Sent discovery message of {device.type}-{device.sn} to Home Assistant')
 
     async def _handle_command(self, mqtt_message: MQTTMessage):
         # Parse the mqtt_message.topic
@@ -521,78 +596,6 @@ class MQTTClient:
             return
 
         await self.bus.put(CommandMessage(device, cmd))
-
-    async def _send_discovery_message(self, client: Client):
-        def payload(id: str, device: BluettiDevice, field: MqttFieldConfig) -> str:
-            ha_id = id if not field.id_override else field.id_override
-            payload_dict = {
-                'state_topic': f'bluetti/state/{device.type}-{device.sn}/{id}',
-                'device': {
-                    'identifiers': [
-                        f'{device.sn}'
-                    ],
-                    'manufacturer': 'Bluetti',
-                    'name': f'{device.type} {device.sn}',
-                    'model': device.type
-                },
-                'unique_id': f'{device.sn}_{ha_id}',
-                'object_id': f'{device.type}_{ha_id}',
-            }
-            if field.setter:
-                payload_dict['command_topic'] = f'bluetti/command/{device.type}-{device.sn}/{id}'
-            payload_dict.update(field.home_assistant_extra)
-
-            return json.dumps(payload_dict, separators=(',', ':'))
-
-        # Loop through devices
-        for d in self.devices:
-            # Publish normal fields
-            for name, field in NORMAL_DEVICE_FIELDS.items():
-                # Skip fields not supported by the device
-                if not d.has_field(name):
-                    continue
-
-                # Skip advanced fields if not enabled
-                if field.advanced and self.home_assistant_mode != 'advanced':
-                    continue
-
-                # Figure out Home Assistant type
-                if field.type == MqttFieldType.NUMERIC:
-                    type = 'number' if field.setter else 'sensor'
-                elif field.type == MqttFieldType.BOOL:
-                    type = 'switch' if field.setter else 'binary_sensor'
-                elif field.type == MqttFieldType.ENUM:
-                    type = 'select' if field.setter else 'sensor'
-                elif field.type == MqttFieldType.BUTTON:
-                    type = 'button'
-
-                # Publish config
-                await client.publish(
-                    f'homeassistant/{type}/{d.sn}_{name}/config',
-                    payload=payload(name, d, field).encode(),
-                    retain=True
-                )
-
-            # Publish battery pack configs
-            for pack in range(1, d.pack_num_max + 1):
-                fields = self._battery_pack_fields(pack)
-                for field in fields:
-                    await client.publish(
-                        f'homeassistant/sensor/{d.sn}_{field.id_override}/config',
-                        payload=payload(f'pack_details{pack}', d, field).encode(),
-                        retain=True
-                    )
-
-            # Publish DC input config
-            if d.has_field('internal_dc_input_voltage'):
-                for name, field in DC_INPUT_FIELDS.items():
-                    await client.publish(
-                        f'homeassistant/sensor/{d.sn}_{name}/config',
-                        payload=payload(name, d, field).encode(),
-                        retain=True
-                    )
-
-            logging.info(f'Sent discovery message of {d.type}-{d.sn} to Home Assistant')
 
     async def _handle_message(self, client: Client, msg: ParserMessage):
         logging.debug(f'Got a message from {msg.device}: {msg.parsed}')

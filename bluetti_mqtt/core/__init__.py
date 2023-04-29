@@ -8,7 +8,6 @@ from .devices.ep600 import EP600
 from .devices.eb3a import EB3A
 from .commands import (
     DeviceCommand,
-    ModbusDeviceCommand,
     ReadHoldingRegisters,
     WriteSingleRegister,
     WriteMultipleRegisters

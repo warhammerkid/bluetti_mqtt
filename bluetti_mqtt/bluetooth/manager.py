@@ -1,37 +1,48 @@
 import asyncio
 import logging
 from typing import Dict, List
-from bluetti_mqtt.core import BluettiDevice, DeviceCommand
+from bleak import BleakScanner
+from bluetti_mqtt.core import DeviceCommand
 from .client import BluetoothClient
 
 
 class MultiDeviceManager:
-    clients: Dict[BluettiDevice, BluetoothClient]
+    clients: Dict[str, BluetoothClient]
 
-    def __init__(self, devices: List[BluettiDevice]):
-        self.devices = devices
+    def __init__(self, addresses: List[str]):
+        self.addresses = addresses
         self.clients = {}
 
     async def run(self):
-        addresses = [d.address for d in self.devices]
-        logging.info(f'Connecting to clients: {addresses}')
-        self.clients = {d: BluetoothClient(d.address) for d in self.devices}
+        logging.info(f'Connecting to clients: {self.addresses}')
+
+        # Perform a blocking scan just to speed up initial connect
+        await BleakScanner.discover()
+
+        # Start client loops
+        self.clients = {a: BluetoothClient(a) for a in self.addresses}
         await asyncio.gather(*[c.run() for c in self.clients.values()])
 
-    def is_connected(self, device: BluettiDevice):
-        if device in self.clients:
-            return self.clients[device].is_connected
+    def is_ready(self, address: str):
+        if address in self.clients:
+            return self.clients[address].is_ready
         else:
             return False
 
-    async def perform(self, device: BluettiDevice, command: DeviceCommand):
-        if device in self.clients:
-            return await self.clients[device].perform(command)
+    def get_name(self, address: str):
+        if address in self.clients:
+            return self.clients[address].name
         else:
-            raise Exception('Unknown device')
+            raise Exception('Unknown address')
 
-    async def perform_nowait(self, device: BluettiDevice, command: DeviceCommand):
-        if device in self.clients:
-            await self.clients[device].perform_nowait(command)
+    async def perform(self, address: str, command: DeviceCommand):
+        if address in self.clients:
+            return await self.clients[address].perform(command)
         else:
-            raise Exception('Unknown device')
+            raise Exception('Unknown address')
+
+    async def perform_nowait(self, address: str, command: DeviceCommand):
+        if address in self.clients:
+            await self.clients[address].perform_nowait(command)
+        else:
+            raise Exception('Unknown address')
