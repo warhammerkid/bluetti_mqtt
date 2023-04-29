@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+## 0.14.0
+
 * BREAKING: The internal API has changed to better reflect standard MODBUS terminology
 * Out-of-range internal_current_three values are no longer reported for AC300
 * No longer checks if it can connect to all listed devices when logging
