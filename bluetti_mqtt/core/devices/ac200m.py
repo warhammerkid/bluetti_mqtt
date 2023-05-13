@@ -52,6 +52,7 @@ class AC200M(BluettiDevice):
 
         # Battery Data
         self.struct.add_uint_field('pack_num_max', 91)
+        self.struct.add_decimal_field('total_battery_voltage', 92, 2)
         self.struct.add_uint_field('pack_num', 96)
         self.struct.add_decimal_field('pack_voltage', 98, 2)  # Full pack voltage
         self.struct.add_uint_field('pack_battery_percent', 99)
