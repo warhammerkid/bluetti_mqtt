@@ -246,6 +246,30 @@ NORMAL_DEVICE_FIELDS = {
             'force_update': True,
         }
     ),
+    'total_battery_voltage': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Total Battery Voltage',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'total_battery_current': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Total Battery Current',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
     'ups_mode': MqttFieldConfig(
         type=MqttFieldType.ENUM,
         setter=True,
@@ -419,6 +443,48 @@ DC_INPUT_FIELDS = {
 }
 
 
+def battery_pack_fields(pack: int):
+    return {
+        'pack_status': MqttFieldConfig(
+            type=MqttFieldType.ENUM,
+            setter=False,
+            advanced=True,
+            home_assistant_extra={
+                'name': f'Battery Pack {pack} Status',
+                'value_template': '{{ value_json.status }}'
+            },
+            id_override=f'pack_status{pack}'
+        ),
+        'pack_voltage': MqttFieldConfig(
+            type=MqttFieldType.NUMERIC,
+            setter=False,
+            advanced=True,
+            home_assistant_extra={
+                'name': f'Battery Pack {pack} Voltage',
+                'unit_of_measurement': 'V',
+                'device_class': 'voltage',
+                'state_class': 'measurement',
+                'force_update': True,
+                'value_template': '{{ value_json.voltage }}'
+            },
+            id_override=f'pack_voltage{pack}'
+        ),
+        'pack_battery_percent': MqttFieldConfig(
+            type=MqttFieldType.NUMERIC,
+            setter=False,
+            advanced=False,
+            home_assistant_extra={
+                'name': f'Battery Pack {pack} Percent',
+                'unit_of_measurement': '%',
+                'device_class': 'battery',
+                'state_class': 'measurement',
+                'value_template': '{{ value_json.percent }}'
+            },
+            id_override=f'pack_percent{pack}'
+        ),
+    }
+
+
 class MQTTClient:
     devices: List[BluettiDevice]
     message_queue: asyncio.Queue
@@ -540,8 +606,13 @@ class MQTTClient:
 
         # Publish battery pack configs
         for pack in range(1, device.pack_num_max + 1):
-            fields = self._battery_pack_fields(pack)
-            for field in fields:
+            fields = battery_pack_fields(pack)
+            for name, field in fields.items():
+                # Skip fields not supported by the device
+                if not device.has_field(name):
+                    continue
+
+                # Publish config
                 await client.publish(
                     f'homeassistant/sensor/{device.sn}_{field.id_override}/config',
                     payload=payload(f'pack_details{pack}', device, field).encode(),
@@ -621,11 +692,8 @@ class MQTTClient:
             await client.publish(topic_prefix + name, payload=payload.encode())
 
         # Publish battery pack data
-        if 'pack_battery_percent' in msg.parsed:
-            pack_details = {
-                'percent': msg.parsed['pack_battery_percent'],
-                'voltages': [float(d) for d in msg.parsed['cell_voltages']],
-            }
+        pack_details = self._build_pack_details(msg.parsed)
+        if 'pack_num' in msg.parsed and len(pack_details) > 0:
             await client.publish(
                 topic_prefix + f'pack_details{msg.parsed["pack_num"]}',
                 payload=json.dumps(pack_details, separators=(',', ':')).encode()
@@ -648,19 +716,14 @@ class MQTTClient:
                 payload=str(msg.parsed['internal_dc_input_current']).encode()
             )
 
-    def _battery_pack_fields(self, pack: int):
-        return [
-            MqttFieldConfig(
-                type=MqttFieldType.NUMERIC,
-                setter=False,
-                advanced=False,
-                home_assistant_extra={
-                    'name': f'Battery Pack {pack} Percent',
-                    'unit_of_measurement': '%',
-                    'device_class': 'battery',
-                    'state_class': 'measurement',
-                    'value_template': '{{ value_json.percent }}'
-                },
-                id_override=f'pack_percent{pack}'
-            )
-        ]
+    def _build_pack_details(self, parsed: dict):
+        details = {}
+        if 'pack_status' in parsed:
+            details['status'] = parsed['pack_status'].name
+        if 'pack_battery_percent' in parsed:
+            details['percent'] = parsed['pack_battery_percent']
+        if 'pack_voltage' in parsed:
+            details['voltage'] = float(parsed['pack_voltage'])
+        if 'cell_voltages' in parsed:
+            details['voltages'] = [float(d) for d in parsed['cell_voltages']]
+        return details

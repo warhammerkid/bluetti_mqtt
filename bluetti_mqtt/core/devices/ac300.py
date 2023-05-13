@@ -15,6 +15,13 @@ class OutputMode(Enum):
 
 
 @unique
+class BatteryState(Enum):
+    STANDBY = 0
+    CHARGE = 1
+    DISCHARGE = 2
+
+
+@unique
 class UpsMode(Enum):
     CUSTOMIZED = 1
     PV_PRIORITY = 2
@@ -72,7 +79,10 @@ class AC300(BluettiDevice):
 
         # Battery Data
         self.struct.add_uint_field('pack_num_max', 91)
+        self.struct.add_decimal_field('total_battery_voltage', 92, 1)
+        self.struct.add_decimal_field('total_battery_current', 93, 1)
         self.struct.add_uint_field('pack_num', 96)
+        self.struct.add_enum_field('pack_status', 97, BatteryState)
         self.struct.add_decimal_field('pack_voltage', 98, 2)  # Full pack voltage
         self.struct.add_uint_field('pack_battery_percent', 99)
         self.struct.add_decimal_array_field('cell_voltages', 105, 16, 2)

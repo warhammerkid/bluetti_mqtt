@@ -2,6 +2,8 @@
 
 ## FUTURE
 
+* Add additional battery pack details for AC200M, AC300, EP500(P), and AC500
+
 ## 0.14.0
 
 * BREAKING: The internal API has changed to better reflect standard MODBUS terminology
