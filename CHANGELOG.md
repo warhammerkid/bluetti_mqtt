@@ -3,6 +3,7 @@
 ## FUTURE
 
 * Add additional battery pack details for AC200M, AC300, EP500(P), and AC500
+* Add initial logging support for AC60 (and very basic polling)
 
 ## 0.14.0
 
