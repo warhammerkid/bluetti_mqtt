@@ -4,12 +4,14 @@ from ..commands import ReadHoldingRegisters
 from .bluetti_device import BluettiDevice
 from .struct import DeviceStruct
 
+
 @unique
 class LedMode(Enum):
     OFF = 0
     LOW = 1
     HIGH = 2
     SOS = 3
+
 
 class ChargingMode(Enum):
     STANDARD = 0
@@ -89,7 +91,7 @@ class AC60(BluettiDevice):
         self.struct.add_version_field('bcu_version', 6175)
 
         # Battery Data Register (6300)
-   
+
         super().__init__(address, 'AC60', sn)
 
     @property
