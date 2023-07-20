@@ -44,68 +44,6 @@ NORMAL_DEVICE_FIELDS = {
             'force_update': True,
         }
     ),
-    'inverter_power': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=False,
-        home_assistant_extra={
-            'name': 'Inverter Power',
-            'unit_of_measurement': 'W',
-            'device_class': 'power',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
-
-
-    'grid_frequency': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=False,
-        home_assistant_extra={
-            'name': 'Grid Frequency',
-            'unit_of_measurement': 'Hz',
-            'device_class': 'power',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
-    'grid_total_charging_power': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=False,
-        home_assistant_extra={
-            'name': 'Grid Total Charging Power',
-            'unit_of_measurement': 'W',
-            'device_class': 'power',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
-    'grid_total_charging_energy': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=False,
-        home_assistant_extra={
-            'name': 'Inverter Power',
-            'unit_of_measurement': 'W',
-            'device_class': 'power',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
-    'grid_feedback_energy': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=False,
-        home_assistant_extra={
-            'name': 'Grid Feedback Energy',
-            'unit_of_measurement': 'KWh',
-            'device_class': 'power',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
     # Totals
     'power_generation': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,

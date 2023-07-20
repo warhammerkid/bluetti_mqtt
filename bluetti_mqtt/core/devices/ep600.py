@@ -14,11 +14,6 @@ class EP600(BluettiDevice):
         self.struct.add_uint_field('dc_input_power', 144)  # Total PV in
         self.struct.add_uint_field('ac_output_power', 142)  # Total AC out
         self.struct.add_uint_field('grid_power', 146)  # Total Grid in
-        self.struct.add_uint_field('inverter_power', 148)  # InvAllTotalPowerLo
-        self.struct.add_uint_field('grid_frequency', 1300)  # GridFrequency
-        self.struct.add_uint_field('grid_total_charging_power', 1301)  # GridTotalChargingPower
-        self.struct.add_uint_field('grid_total_charging_energy', 1303)  # GridTotalChargingEnergy
-        self.struct.add_uint_field('grid_feedback_energy', 1305)  # GridTotalFeedbackEnergy
         # EP600 totals
         self.struct.add_decimal_field('total_ac_consumption', 152, 1)  # Load consumption
         self.struct.add_decimal_field('power_generation', 154, 1)  # Total power generated since last reset (kwh)
