@@ -7,28 +7,23 @@ from .struct import DeviceStruct
 class EP600(BluettiDevice):
     def __init__(self, address: str, sn: str):
         self.struct = DeviceStruct()
-
+        # EP600 current values
         self.struct.add_uint_field('total_battery_percent', 102)
         self.struct.add_swap_string_field('device_type', 110, 6)
         self.struct.add_sn_field('serial_number', 116)
+        self.struct.add_uint_field('dc_input_power', 144)  # Total PV in
+        self.struct.add_uint_field('ac_output_power', 142)  # Total AC out
+        self.struct.add_uint_field('grid_power', 146)  # Total Grid in
+        self.struct.add_uint_field('inverter_power', 148)  # InvAllTotalPowerLo
+        self.struct.add_uint_field('grid_frequency', 1300)  # GridFrequency
+        self.struct.add_uint_field('grid_total_charging_power', 1301)  # GridTotalChargingPower
+        self.struct.add_uint_field('grid_total_charging_energy', 1303)  # GridTotalChargingEnergy
+        self.struct.add_uint_field('grid_feedback_energy', 1305)  # GridTotalFeedbackEnergy
+        # EP600 totals
+        self.struct.add_decimal_field('total_ac_consumption', 152, 1)  # Load consumption
         self.struct.add_decimal_field('power_generation', 154, 1)  # Total power generated since last reset (kwh)
-        self.struct.add_swap_string_field('device_type', 1101, 6)
-        self.struct.add_sn_field('serial_number', 1107)
-        self.struct.add_decimal_field('power_generation', 1202, 1)  # Total power generated since last reset (kwh)
-        # 2001-2003 is the current device time & date without a timezone
-        self.struct.add_uint_field('battery_range_start', 2022)
-        self.struct.add_uint_field('battery_range_end', 2023)
-        self.struct.add_uint_field('max_ac_input_power', 2213)
-        self.struct.add_uint_field('max_ac_input_current', 2214)
-        self.struct.add_uint_field('max_ac_output_power', 2215)
-        self.struct.add_uint_field('max_ac_output_current', 2216)
-        self.struct.add_swap_string_field('battery_type', 6101, 6)
-        self.struct.add_sn_field('battery_serial_number', 6107)
-        self.struct.add_version_field('bcu_version', 6175)
-        self.struct.add_version_field('bmu_version', 6178)
-        self.struct.add_version_field('safety_module_version', 6181)
-        self.struct.add_version_field('high_voltage_module_version', 6184)
-
+        self.struct.add_decimal_field('total_grid_consumption', 156, 1)  # Grid consumption stats
+        self.struct.add_decimal_field('total_grid_feed', 158, 1)
         super().__init__(address, 'EP600', sn)
 
     @property
@@ -36,6 +31,8 @@ class EP600(BluettiDevice):
         return [
             ReadHoldingRegisters(100, 62),
             ReadHoldingRegisters(2022, 2),
+            ReadHoldingRegisters(1212, 3),
+            ReadHoldingRegisters(1300, 30),
         ]
 
     @property
