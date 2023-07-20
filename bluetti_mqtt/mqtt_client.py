@@ -45,28 +45,6 @@ NORMAL_DEVICE_FIELDS = {
         }
     ),
     # Totals
-    'power_generation': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=False,
-        home_assistant_extra={
-            'name': 'Total Solar Generation',
-            'unit_of_measurement': 'kWh',
-            'device_class': 'energy',
-            'state_class': 'total_increasing',
-        }
-    ),
-    'total_battery_percent': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=False,
-        home_assistant_extra={
-            'name': 'Total Battery Percent',
-            'unit_of_measurement': '%',
-            'device_class': 'battery',
-            'state_class': 'measurement',
-        }
-    ),
     'total_grid_consumption': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
