@@ -16,12 +16,12 @@ class EP600(BluettiDevice):
         self.struct.add_uint_field('grid_power', 146)  # Total Grid in
         self.struct.add_uint_field('battery_range_start', 2022)
         self.struct.add_uint_field('battery_range_end', 2023)
-        self.struct.add_uint_field('pv_power_one', 1212)  # MPP 1 in
-        self.struct.add_uint_field('pv_voltage_one', 1213)  # MPP 1 in
-        self.struct.add_uint_field('pv_current_one', 1214)  # MPP 1 in
-        self.struct.add_uint_field('pv_power_two', 1220)  # MPP 2 in
-        self.struct.add_uint_field('pv_voltage_two', 1221)  # MPP 2 in
-        self.struct.add_uint_field('pv_current_two', 1222)  # MPP 2 in
+        self.struct.add_uint_field('dc_input_power1', 1212)  # MPP 1 in
+        self.struct.add_uint_field('dc_input_voltage1', 1213)  # MPP 1 in
+        self.struct.add_uint_field('dc_input_current1', 1214)  # MPP 1 in
+        self.struct.add_uint_field('dc_input_power2', 1220)  # MPP 2 in
+        self.struct.add_uint_field('dc_input_voltage2', 1221)  # MPP 2 in
+        self.struct.add_uint_field('dc_input_current2', 1222)  # MPP 2 in
 
         # EP600 totals
         self.struct.add_decimal_field('total_ac_consumption', 152, 1)  # Load consumption

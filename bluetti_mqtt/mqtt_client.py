@@ -30,8 +30,8 @@ class MqttFieldConfig:
 
 COMMAND_TOPIC_RE = re.compile(r'^bluetti/command/(\w+)-(\d+)/([a-z_]+)$')
 NORMAL_DEVICE_FIELDS = {
-# EP600 new values start
-# current values
+    # EP600 new values start
+    # current values
     'grid_power': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
@@ -96,7 +96,7 @@ NORMAL_DEVICE_FIELDS = {
         advanced=True,
         home_assistant_extra={
             'name': 'PV1 Current',
-            'unit_of_measurement': 'A', # 0.1 A
+            'unit_of_measurement': 'A',  # 0.1 A
             'device_class': 'current',
             'state_class': 'measurement',
             'force_update': True,
@@ -108,7 +108,7 @@ NORMAL_DEVICE_FIELDS = {
         advanced=True,
         home_assistant_extra={
             'name': 'PV1 Power',
-            'unit_of_measurement': 'W', # 0.1 W
+            'unit_of_measurement': 'W',  # 0.1 W
             'device_class': 'power',
             'state_class': 'measurement',
             'force_update': True,
@@ -558,6 +558,45 @@ DC_INPUT_FIELDS = {
         advanced=False,
         home_assistant_extra={
             'name': 'DC Input Current 1',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+
+
+
+       'dc_input_voltage2': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'DC Input Voltage 2',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'dc_input_power2': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'DC Input Power 2',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'dc_input_current2': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'DC Input Current 2',
             'unit_of_measurement': 'A',
             'device_class': 'current',
             'state_class': 'measurement',
