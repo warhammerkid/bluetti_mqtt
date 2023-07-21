@@ -78,6 +78,81 @@ NORMAL_DEVICE_FIELDS = {
             'state_class': 'total_increasing',
         }
     ),
+    'pv_voltage_one': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Internal AC Voltage',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_current_one': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Internal Current Sensor 1',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_power_one': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Internal Power Sensor 1',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_voltage_two': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Internal AC Voltage',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_current_two': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Internal Current Sensor 1',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_power_two': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Internal Power Sensor 1',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+
+
+
 # EP600 end
     'dc_input_power': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
