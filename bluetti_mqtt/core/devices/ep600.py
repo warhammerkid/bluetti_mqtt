@@ -37,7 +37,7 @@ class EP600(BluettiDevice):
         return [
             ReadHoldingRegisters(100, 62),
             ReadHoldingRegisters(2022, 2),
-            ReadHoldingRegisters(1212, 10),
+            ReadHoldingRegisters(1212, 11),
             ReadHoldingRegisters(1300, 30),
         ]
 
