@@ -83,7 +83,7 @@ NORMAL_DEVICE_FIELDS = {
         setter=False,
         advanced=True,
         home_assistant_extra={
-            'name': 'Internal AC Voltage',
+            'name': 'PV1 Voltage',
             'unit_of_measurement': 'V',
             'device_class': 'voltage',
             'state_class': 'measurement',
@@ -95,8 +95,8 @@ NORMAL_DEVICE_FIELDS = {
         setter=False,
         advanced=True,
         home_assistant_extra={
-            'name': 'Internal Current Sensor 1',
-            'unit_of_measurement': 'A',
+            'name': 'PV1 Current',
+            'unit_of_measurement': 'A', # 0.1 A
             'device_class': 'current',
             'state_class': 'measurement',
             'force_update': True,
@@ -107,8 +107,8 @@ NORMAL_DEVICE_FIELDS = {
         setter=False,
         advanced=True,
         home_assistant_extra={
-            'name': 'Internal Power Sensor 1',
-            'unit_of_measurement': 'W',
+            'name': 'PV1 Power',
+            'unit_of_measurement': 'W', # 0.1 W
             'device_class': 'power',
             'state_class': 'measurement',
             'force_update': True,
@@ -119,7 +119,7 @@ NORMAL_DEVICE_FIELDS = {
         setter=False,
         advanced=True,
         home_assistant_extra={
-            'name': 'Internal AC Voltage',
+            'name': 'PV2 Voltage',
             'unit_of_measurement': 'V',
             'device_class': 'voltage',
             'state_class': 'measurement',
@@ -131,8 +131,8 @@ NORMAL_DEVICE_FIELDS = {
         setter=False,
         advanced=True,
         home_assistant_extra={
-            'name': 'Internal Current Sensor 1',
-            'unit_of_measurement': 'A',
+            'name': 'PV2 Current',
+            'unit_of_measurement': 'A', # 0.1 A
             'device_class': 'current',
             'state_class': 'measurement',
             'force_update': True,
@@ -143,8 +143,8 @@ NORMAL_DEVICE_FIELDS = {
         setter=False,
         advanced=True,
         home_assistant_extra={
-            'name': 'Internal Power Sensor 1',
-            'unit_of_measurement': 'W',
+            'name': 'PV2 Power',
+            'unit_of_measurement': 'W', # 0.1 W
             'device_class': 'power',
             'state_class': 'measurement',
             'force_update': True,
