@@ -30,7 +30,7 @@ class MqttFieldConfig:
 
 COMMAND_TOPIC_RE = re.compile(r'^bluetti/command/(\w+)-(\d+)/([a-z_]+)$')
 NORMAL_DEVICE_FIELDS = {
-    # EP600 new values start
+    # EP600 specific values start
     # current values
     'grid_power': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
@@ -90,70 +90,8 @@ NORMAL_DEVICE_FIELDS = {
             'force_update': True,
         }
     ),
-    'pv_current_one': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=True,
-        home_assistant_extra={
-            'name': 'PV1 Current',
-            'unit_of_measurement': 'A',  # 0.1 A
-            'device_class': 'current',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
-    'pv_power_one': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=True,
-        home_assistant_extra={
-            'name': 'PV1 Power',
-            'unit_of_measurement': 'W',  # 0.1 W
-            'device_class': 'power',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
-    'pv_voltage_two': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=True,
-        home_assistant_extra={
-            'name': 'PV2 Voltage',
-            'unit_of_measurement': 'V',
-            'device_class': 'voltage',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
-    'pv_current_two': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=True,
-        home_assistant_extra={
-            'name': 'PV2 Current',
-            'unit_of_measurement': 'A', # 0.1 A
-            'device_class': 'current',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
-    'pv_power_two': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=True,
-        home_assistant_extra={
-            'name': 'PV2 Power',
-            'unit_of_measurement': 'W', # 0.1 W
-            'device_class': 'power',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
 
-
-
-# EP600 end
+    # EP600 end
     'dc_input_power': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
@@ -564,10 +502,7 @@ DC_INPUT_FIELDS = {
             'force_update': True,
         }
     ),
-
-
-
-       'dc_input_voltage2': MqttFieldConfig(
+    'dc_input_voltage2': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
         advanced=False,
