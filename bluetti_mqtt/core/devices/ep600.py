@@ -22,6 +22,17 @@ class EP600(BluettiDevice):
         self.struct.add_uint_field('dc_input_power2', 1220)  # MPP 2 in  - value * 0.1
         self.struct.add_uint_field('dc_input_voltage2', 1221)  # MPP 2 in  - value * 0.1
         self.struct.add_uint_field('dc_input_current2', 1222)  # MPP 2 in
+        self.struct.add_uint_field('grid_frequency', 1300)
+        self.struct.add_uint_field('grid_power1', 1313)
+        self.struct.add_uint_field('grid_voltage1', 1314)  # value * 0.1
+        self.struct.add_uint_field('grid_current1', 1315)  # value * 0.1
+        self.struct.add_uint_field('grid_power2', 1319)
+        self.struct.add_uint_field('grid_voltage2', 1320)  # value * 0.1
+        self.struct.add_uint_field('grid_current2', 1321)  # value * 0.1
+        self.struct.add_uint_field('grid_power3', 1325)
+        self.struct.add_uint_field('grid_voltage3', 1326)  # value * 0.1
+        self.struct.add_uint_field('grid_current3', 1327)  # value * 0.1
+
 
         # EP600 totals
         self.struct.add_decimal_field('total_ac_consumption', 152, 1)  # Load consumption
