@@ -44,7 +44,18 @@ NORMAL_DEVICE_FIELDS = {
             'force_update': True,
         }
     ),
-
+    'grid_frequency': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=True,
+        home_assistant_extra={
+            'name': 'Grid Frequency',
+            'unit_of_measurement': 'Hz',
+            'device_class': 'frequency',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
     'grid_voltage1': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
@@ -575,18 +586,6 @@ NORMAL_DEVICE_FIELDS = {
     ),
 }
 DC_INPUT_FIELDS = {
-    'grid_frequency': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=True,
-        home_assistant_extra={
-            'name': 'Grid Frequency',
-            'unit_of_measurement': 'Hz',
-            'device_class': 'frequency',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
     'dc_input_voltage1': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
