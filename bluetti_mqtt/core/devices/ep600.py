@@ -16,12 +16,12 @@ class EP600(BluettiDevice):
         self.struct.add_decimal_field('grid_power', 146, 1)  # Total Grid in - value only +/- unknown
         self.struct.add_uint_field('battery_range_start', 2022)
         self.struct.add_uint_field('battery_range_end', 2023)
-        self.struct.add_uint_field('dc_input_power1', 1212)  # MPP 1 in - value * 0.1
-        self.struct.add_uint_field('dc_input_voltage1', 1213)  # MPP 1 in  - value * 0.1
-        self.struct.add_uint_field('dc_input_current1', 1214)  # MPP 1 in
-        self.struct.add_uint_field('dc_input_power2', 1220)  # MPP 2 in  - value * 0.1
-        self.struct.add_uint_field('dc_input_voltage2', 1221)  # MPP 2 in  - value * 0.1
-        self.struct.add_uint_field('dc_input_current2', 1222)  # MPP 2 in
+        self.struct.add_uint_field('pv_input_power1', 1212)  # MPP 1 in - value * 0.1
+        self.struct.add_uint_field('pv_input_voltage1', 1213)  # MPP 1 in  - value * 0.1
+        self.struct.add_uint_field('pv_input_current1', 1214)  # MPP 1 in
+        self.struct.add_uint_field('pv_input_power2', 1220)  # MPP 2 in  - value * 0.1
+        self.struct.add_uint_field('pv_input_voltage2', 1221)  # MPP 2 in  - value * 0.1
+        self.struct.add_uint_field('pv_input_current2', 1222)  # MPP 2 in
         self.struct.add_uint_field('grid_frequency', 1300)
         self.struct.add_uint_field('grid_power1', 1313)
         self.struct.add_uint_field('grid_voltage1', 1314)  # value * 0.1

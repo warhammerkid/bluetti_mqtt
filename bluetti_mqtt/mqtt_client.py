@@ -32,42 +32,6 @@ COMMAND_TOPIC_RE = re.compile(r'^bluetti/command/(\w+)-(\d+)/([a-z_]+)$')
 NORMAL_DEVICE_FIELDS = {
     # EP600 specific values start
     # current values
-    'dc_input_voltage2': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=False,
-        home_assistant_extra={
-            'name': 'DC Input Voltage 2',
-            'unit_of_measurement': 'V',
-            'device_class': 'voltage',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
-    'dc_input_power2': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=False,
-        home_assistant_extra={
-            'name': 'DC Input Power 2',
-            'unit_of_measurement': 'W',
-            'device_class': 'power',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
-    'dc_input_current2': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=False,
-        home_assistant_extra={
-            'name': 'DC Input Current 2',
-            'unit_of_measurement': 'A',
-            'device_class': 'current',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
     'grid_power': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
@@ -194,6 +158,78 @@ NORMAL_DEVICE_FIELDS = {
         advanced=False,
         home_assistant_extra={
             'name': 'Grid Current Phase 3',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_input_voltage1': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Voltage 1',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_input_power1': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Power 1',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_input_current1': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Current 1',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_input_voltage2': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Voltage 2',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_input_power2': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Power 2',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_input_current2': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Current 2',
             'unit_of_measurement': 'A',
             'device_class': 'current',
             'state_class': 'measurement',
@@ -660,8 +696,6 @@ DC_INPUT_FIELDS = {
     ),
 
 }
-
-
 def battery_pack_fields(pack: int):
     return {
         'pack_status': MqttFieldConfig(
