@@ -188,7 +188,19 @@ NORMAL_DEVICE_FIELDS = {
             'force_update': True,
         }
     ),
-    'pv_input_current1': MqttFieldConfig(
+   'pv_input_power_all': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Power All',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+   'pv_input_current1': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
         advanced=False,
