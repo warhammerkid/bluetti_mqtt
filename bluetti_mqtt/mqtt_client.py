@@ -66,7 +66,7 @@ NORMAL_DEVICE_FIELDS = {
             'device_class': 'voltage',
             'state_class': 'measurement',
             'force_update': True,
-            'value_template': '{{ value_json.grid_voltage1 * 100 | float }}'
+            #'value_template': '{{ value_json.grid_voltage1 * 100 | float }}'
         }
     ),
     'grid_power1': MqttFieldConfig(
