@@ -13,7 +13,8 @@ class EP600(BluettiDevice):
         self.struct.add_sn_field('serial_number', 116)
         self.struct.add_uint_field('pv_input_power_all', 144)  # Total PV in
         self.struct.add_uint_field('ac_output_power', 142)  # Total AC out
-        self.struct.add_decimal_field('grid_power', 146, 1)  # Total Grid in - value only +/- unknown
+        self.struct.add_uint_field('grid_power', 146)  # Total Grid in - value only +/- unknown
+        #  self.struct.add_uint_field('feedback_energy', 158)
         self.struct.add_uint_field('battery_range_start', 2022)
         self.struct.add_uint_field('battery_range_end', 2023)
         self.struct.add_uint_field('pv_input_power1', 1212)  # MPP 1 in - value * 0.1
