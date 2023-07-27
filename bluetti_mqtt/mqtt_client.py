@@ -69,19 +69,6 @@ NORMAL_DEVICE_FIELDS = {
             #'value_template': '{{ value_json.grid_voltage1 * 100 | float }}'
         }
     ),
-    'grid_voltage1_corrected': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=False,
-        home_assistant_extra={
-            'name': 'Grid Voltage Phase 1 corrected',
-            'unit_of_measurement': 'V',
-            'device_class': 'voltage',
-            'state_class': 'measurement',
-            'force_update': True,
-            'value_template': '{{ value_json.grid_voltage1 * 100 | float }}'
-        }
-    ),
     'grid_power1': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
