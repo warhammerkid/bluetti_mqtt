@@ -44,6 +44,7 @@ NORMAL_DEVICE_FIELDS = {
             'force_update': True,
         }
     ),
+    # grid details
     'grid_frequency': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
@@ -66,7 +67,6 @@ NORMAL_DEVICE_FIELDS = {
             'device_class': 'voltage',
             'state_class': 'measurement',
             'force_update': True,
-            #'value_template': '{{ value_json.grid_voltage1 * 100 | float }}'
         }
     ),
     'grid_power1': MqttFieldConfig(
@@ -173,6 +173,115 @@ NORMAL_DEVICE_FIELDS = {
             'name': 'PV Input Voltage 1',
             'unit_of_measurement': 'V',
             'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+# consumption details
+    'ac_output_voltage1': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC Output Voltage Phase 1',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'ac_output_power1': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC Output Power Phase 1',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'ac_output_current1': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC Output Current Phase 1',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'ac_output_voltage2': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC Output Voltage Phase 2',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'ac_output_power2': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC Output Power Phase 2',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'ac_output_current2': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC Output Current Phase 2',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'ac_output_voltage3': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC Output Voltage Phase 3',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'ac_output_power3': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC Output Power Phase 3',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'ac_output_current3': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC Output Current Phase 3',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
             'state_class': 'measurement',
             'force_update': True,
         }
