@@ -44,18 +44,6 @@ NORMAL_DEVICE_FIELDS = {
             'force_update': True,
         }
     ),
-    'grid_power_high': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=False,
-        home_assistant_extra={
-            'name': 'Grid Power High',
-            'unit_of_measurement': 'W',
-            'device_class': 'power',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
     # grid details
     'grid_frequency': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
