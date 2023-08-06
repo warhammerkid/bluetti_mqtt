@@ -30,7 +30,7 @@ class MqttFieldConfig:
 
 COMMAND_TOPIC_RE = re.compile(r'^bluetti/command/(\w+)-(\d+)/([a-z_]+)$')
 NORMAL_DEVICE_FIELDS = {
-    # EP600 specific values start
+    # EP600 specific values
     # current values
     'grid_power': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
@@ -286,6 +286,7 @@ NORMAL_DEVICE_FIELDS = {
             'force_update': True,
         }
     ),
+    # PV in
     'pv_input_power1': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
