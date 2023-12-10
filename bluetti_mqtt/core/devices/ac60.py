@@ -45,10 +45,10 @@ class AC60(BluettiDevice):
         self.struct.add_uint_field('pack_dc_input_power', 1220)
         self.struct.add_decimal_field('pack_dc_input_voltage', 1221, 1)
         self.struct.add_decimal_field('pack_dc_input_current', 1222, 1)
-        self.struct.add_decimal_field('internal_ac_input_frequency', 1300, 1)
+        self.struct.add_decimal_field('ac_input_frequency', 1300, 1)
         self.struct.add_uint_field('internal_ac_input_power', 1313)
-        self.struct.add_decimal_field('internal_ac_input_voltage', 1314, 1)
-        self.struct.add_decimal_field('internal_ac_input_current', 1315, 1)
+        self.struct.add_decimal_field('ac_input_voltage', 1314, 1)
+        self.struct.add_decimal_field('ac_input_current', 1315, 1)
 
         # Output Details (1400 - 1500)
         self.struct.add_uint_field('total_dc_output_power', 1400)
@@ -68,10 +68,10 @@ class AC60(BluettiDevice):
         self.struct.add_enum_field('led_mode', 2007, LedMode)
         self.struct.add_bool_field('ac_output_on', 2011)
         self.struct.add_bool_field('dc_output_on', 2012)
-        self.struct.add_bool_field('dc_eco_mode_on', 2014)
+        self.struct.add_bool_field('dc_eco_on', 2014)
         self.struct.add_uint_field('dc_eco_hours', 2015)
         self.struct.add_uint_field('dc_eco_watts', 2016)
-        self.struct.add_bool_field('ac_eco_mode_on', 2017)
+        self.struct.add_bool_field('ac_eco_on', 2017)
         self.struct.add_uint_field('ac_eco_hours', 2018)
         self.struct.add_uint_field('ac_eco_watts', 2019)
         self.struct.add_enum_field('charging_mode', 2020, ChargingMode)
@@ -97,13 +97,23 @@ class AC60(BluettiDevice):
     @property
     def polling_commands(self) -> List[ReadHoldingRegisters]:
         return [
-            ReadHoldingRegisters(100, 62),
+            ReadHoldingRegisters(100, 50),
+            ReadHoldingRegisters(1100, 51),
+            ReadHoldingRegisters(1200, 90),
+            ReadHoldingRegisters(1300, 31),
+            ReadHoldingRegisters(1400, 48),
+            ReadHoldingRegisters(1500, 30),
+            ReadHoldingRegisters(2000, 67),
+            ReadHoldingRegisters(2200, 29),
+            ReadHoldingRegisters(6000, 31),
+            ReadHoldingRegisters(6100, 100),
+            ReadHoldingRegisters(6300, 52),
         ]
 
     @property
     def logging_commands(self) -> List[ReadHoldingRegisters]:
         return [
-            ReadHoldingRegisters(100, 62),
+            ReadHoldingRegisters(100, 50),
             ReadHoldingRegisters(1100, 51),
             ReadHoldingRegisters(1200, 90),
             ReadHoldingRegisters(1300, 31),
