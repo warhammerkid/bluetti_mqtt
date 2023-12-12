@@ -25,7 +25,7 @@ class AC60(BluettiDevice):
 
         # Core (100)
         self.struct.add_uint_field('total_battery_percent', 102)
-        self.struct.add_uint_field('estimated_time', 104)
+        self.struct.add_uint_field('estimated_time_min', 104)
         self.struct.add_swap_string_field('device_type', 110, 6)
         self.struct.add_sn_field('serial_number', 116)
         self.struct.add_uint_field('dc_output_power', 140)
