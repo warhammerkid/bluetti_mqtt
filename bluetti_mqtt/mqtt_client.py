@@ -465,13 +465,23 @@ NORMAL_DEVICE_FIELDS = {
             'icon': 'mdi:transmission-tower',
         }
     ),
-    'estimated_time': MqttFieldConfig(
+    'estimated_time_min': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
         advanced=False,
         home_assistant_extra={
             'name': 'Estimated Charge/Run Time',
             'unit_of_measurement': 'min',
+            'icon': 'mdi:update',
+        }
+    ),
+    'estimated_time_hr': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Estimated Charge/Run Time',
+            'unit_of_measurement': 'h',
             'icon': 'mdi:update',
         }
     ),
