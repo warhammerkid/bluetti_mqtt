@@ -3,6 +3,7 @@ from .devices.ac200m import AC200M
 from .devices.ac300 import AC300
 from .devices.ac500 import AC500
 from .devices.ac60 import AC60
+from .devices.ac70 import AC70
 from .devices.ep500 import EP500
 from .devices.ep500p import EP500P
 from .devices.ep600 import EP600
