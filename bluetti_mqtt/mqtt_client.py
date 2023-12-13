@@ -78,6 +78,30 @@ NORMAL_DEVICE_FIELDS = {
             'force_update': True,
         }
     ),
+    'dc_usb_output_power': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'DC USB Output Power',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'dc_12v_output_power': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'DC 12V Output Power',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
     'power_generation': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
@@ -124,6 +148,30 @@ NORMAL_DEVICE_FIELDS = {
         advanced=True,
         home_assistant_extra={
             'name': 'AC Output Mode',
+        }
+    ),
+    'ac_input_voltage': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC Input Voltage',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'ac_input_current': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC Input Current',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
         }
     ),
     'internal_ac_voltage': MqttFieldConfig(
@@ -198,18 +246,6 @@ NORMAL_DEVICE_FIELDS = {
             'force_update': True,
         }
     ),
-    'ac_input_voltage': MqttFieldConfig(
-        type=MqttFieldType.NUMERIC,
-        setter=False,
-        advanced=True,
-        home_assistant_extra={
-            'name': 'AC Input Voltage',
-            'unit_of_measurement': 'V',
-            'device_class': 'voltage',
-            'state_class': 'measurement',
-            'force_update': True,
-        }
-    ),
     'internal_current_three': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
@@ -237,7 +273,7 @@ NORMAL_DEVICE_FIELDS = {
     'ac_input_frequency': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
         setter=False,
-        advanced=True,
+        advanced=False,
         home_assistant_extra={
             'name': 'AC Input Frequency',
             'unit_of_measurement': 'Hz',
@@ -373,6 +409,24 @@ NORMAL_DEVICE_FIELDS = {
             'icon': 'mdi:sprout',
         }
     ),
+    'dc_eco_on': MqttFieldConfig(
+        type=MqttFieldType.BOOL,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'DC ECO',
+            'icon': 'mdi:sprout',
+        }
+    ),
+    'ac_eco_on': MqttFieldConfig(
+        type=MqttFieldType.BOOL,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'AC ECO',
+            'icon': 'mdi:sprout',
+        }
+    ),
     'eco_shutdown': MqttFieldConfig(
         type=MqttFieldType.ENUM,
         setter=True,
@@ -400,6 +454,35 @@ NORMAL_DEVICE_FIELDS = {
         home_assistant_extra={
             'name': 'Power Lifting',
             'icon': 'mdi:arm-flex',
+        }
+    ),
+    'grid_enhancement_mode_on': MqttFieldConfig(
+        type=MqttFieldType.BOOL,
+        setter=True,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Grid Enhancement Mode',
+            'icon': 'mdi:transmission-tower',
+        }
+    ),
+    'estimated_time_min': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Estimated Charge/Run Time',
+            'unit_of_measurement': 'min',
+            'icon': 'mdi:update',
+        }
+    ),
+    'estimated_time_hr': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'Estimated Charge/Run Time',
+            'unit_of_measurement': 'h',
+            'icon': 'mdi:update',
         }
     ),
 }

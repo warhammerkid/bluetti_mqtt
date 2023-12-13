@@ -6,12 +6,6 @@ from .struct import DeviceStruct
 
 
 @unique
-class LedMode(Enum):
-    OFF = 0
-    LOW = 1
-    HIGH = 2
-    SOS = 3
-
 
 class ChargingMode(Enum):
     STANDARD = 0
@@ -19,13 +13,13 @@ class ChargingMode(Enum):
     TURBO = 2
 
 
-class AC60(BluettiDevice):
+class AC70(BluettiDevice):
     def __init__(self, address: str, sn: str):
         self.struct = DeviceStruct()
 
         # Core (100)
         self.struct.add_uint_field('total_battery_percent', 102)
-        self.struct.add_uint_field('estimated_time_min', 104)
+        self.struct.add_decimal_field('estimated_time_hr', 104,1)
         self.struct.add_swap_string_field('device_type', 110, 6)
         self.struct.add_sn_field('serial_number', 116)
         self.struct.add_uint_field('dc_output_power', 140)
@@ -65,7 +59,6 @@ class AC60(BluettiDevice):
         self.struct.add_decimal_field('ac_output_amps', 1512, 1)
 
         # Controls (2000)
-        self.struct.add_enum_field('led_mode', 2007, LedMode)
         self.struct.add_bool_field('ac_output_on', 2011)
         self.struct.add_bool_field('dc_output_on', 2012)
         self.struct.add_bool_field('dc_eco_on', 2014)
@@ -90,9 +83,7 @@ class AC60(BluettiDevice):
         self.struct.add_uint_field('pack_battery_percent', 6113)
         self.struct.add_version_field('bcu_version', 6175)
 
-        # Battery Data Register (6300)
-
-        super().__init__(address, 'AC60', sn)
+        super().__init__(address, 'AC70', sn)
 
     @property
     def polling_commands(self) -> List[ReadHoldingRegisters]:
