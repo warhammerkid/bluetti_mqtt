@@ -359,6 +359,116 @@ NORMAL_DEVICE_FIELDS = {
             'force_update': True,
         }
     ),
+    #ADL400 - PVInput 3-5
+
+    'pv_input_voltage3': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Voltage 3',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_input_power3': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Power 3',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_input_current3': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Current 3',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_input_voltage4': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Voltage 4',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_input_power4': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Power 4',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_input_current4': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Current 4',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_input_voltage5': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Voltage 5',
+            'unit_of_measurement': 'V',
+            'device_class': 'voltage',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_input_power5': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Power 5',
+            'unit_of_measurement': 'W',
+            'device_class': 'power',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
+    'pv_input_current5': MqttFieldConfig(
+        type=MqttFieldType.NUMERIC,
+        setter=False,
+        advanced=False,
+        home_assistant_extra={
+            'name': 'PV Input Current 5',
+            'unit_of_measurement': 'A',
+            'device_class': 'current',
+            'state_class': 'measurement',
+            'force_update': True,
+        }
+    ),
     # Totals
     'total_grid_consumption': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,

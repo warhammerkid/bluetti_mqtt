@@ -22,6 +22,16 @@ class EP600(BluettiDevice):
         self.struct.add_uint_field('pv_input_power2', 1220)  # MPP 2 in  - value * 0.1
         self.struct.add_uint_field('pv_input_voltage2', 1221)  # MPP 2 in  - value * 0.1
         self.struct.add_uint_field('pv_input_current2', 1222)  # MPP 2 in
+        # ADL400 current values
+        self.struct.add_uint_field('pv_input_power3', 1228)  # MPP 3 in - value * 0.1
+        self.struct.add_uint_field('pv_input_voltage3', 1229)  # MPP 3 in  - value * 0.1
+        self.struct.add_uint_field('pv_input_current3', 1230)  # MPP 3 in
+        self.struct.add_uint_field('pv_input_power4', 1236)  # MPP 4 in  - value * 0.1
+        self.struct.add_uint_field('pv_input_voltage4', 1237)  # MPP 4 in  - value * 0.1
+        self.struct.add_uint_field('pv_input_current4', 1238)  # MPP 4 in
+        self.struct.add_uint_field('pv_input_power5', 1244)  # MPP 5 in  - value * 0.1
+        self.struct.add_uint_field('pv_input_voltage5', 1245)  # MPP 5 in  - value * 0.1
+        self.struct.add_uint_field('pv_input_current5', 1246)  # MPP 5 in
         # grid details
         self.struct.add_uint_field('grid_frequency', 1300)
         self.struct.add_uint_field('grid_power1', 1313)
