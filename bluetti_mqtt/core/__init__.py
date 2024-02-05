@@ -6,6 +6,7 @@ from .devices.ac60 import AC60
 from .devices.ep500 import EP500
 from .devices.ep500p import EP500P
 from .devices.ep600 import EP600
+from .devices.PBOX import PBOX
 from .devices.eb3a import EB3A
 from .commands import (
     DeviceCommand,
