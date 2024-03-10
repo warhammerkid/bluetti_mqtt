@@ -103,7 +103,6 @@ class AC300(BluettiDevice):
         self.struct.add_bool_field('bluetooth_connected', 3036)
         # 3039-3056 is the time control programming
         self.struct.add_enum_field('auto_sleep_mode', 3061, AutoSleepMode)
-        self.struct.add_bool_field('power_lifting_on', 3066)
 
         super().__init__(address, 'AC300', sn)
 
