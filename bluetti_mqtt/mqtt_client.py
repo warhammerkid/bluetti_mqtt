@@ -631,7 +631,7 @@ class MQTTClient:
 
     async def _handle_command(self, mqtt_message: MQTTMessage):
         # Parse the mqtt_message.topic
-        m = COMMAND_TOPIC_RE.match(mqtt_message.topic)
+        m = COMMAND_TOPIC_RE.match(str(mqtt_message.topic))
         if not m:
             logging.warn(f'unknown command topic: {mqtt_message.topic}')
             return
