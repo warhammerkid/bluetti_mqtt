@@ -1,5 +1,0 @@
-asyncio-mqtt==0.12.1
-bleak==0.14.3
-crcmod==1.7
-dbus-next==0.2.3
-paho-mqtt==1.6.1
